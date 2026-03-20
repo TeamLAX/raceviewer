@@ -339,8 +339,14 @@
     }
 
     @media (max-width: 1100px) { :root { --grid-cols: 4; } }
-    @media (max-width: 860px)  { :root { --grid-cols: 3; } }
-    @media (max-width: 600px)  { :root { --grid-cols: 2; } }
+    @media (max-width: 860px)  {
+      :root { --grid-cols: 3; }
+      .bottom-cards-wrap { transform: scale(1.2); }
+    }
+    @media (max-width: 600px)  {
+      :root { --grid-cols: 2; }
+      .bottom-cards-wrap { transform: scale(1); }
+    }
   </style>
 </head>
 <body>
