@@ -361,16 +361,49 @@
 <body>
 <div id="app"></div>
 <script>
-const runners = Array.from({ length: 20 }, (_, i) => ({
-  leg: i + 1,
-  name: `Runner ${i + 1}`,
-  years: "",
-  time: "--:--",
-  distance: "",
-  difficulty: (i % 10) + 1,
-  start: "--:-- PDT",
-  photo: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=500&q=80"
+// ═══════════════════════════════════════════════════
+// CONFIG — Replace with your deployed Apps Script URL
+// ═══════════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbwdqzNUoNggKOureM3E7ZPYy5yAgnbLE-37strq_4F7OnZmdqarZ1riWR50MbIb0C_F/exec';
+const POLL_INTERVAL = 30000; // refresh data every 30 seconds
+const FALLBACK_PHOTO = 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=500&q=80';
+// ═══════════════════════════════════════════════════
+
+let runners = Array.from({ length: 20 }, (_, i) => ({
+  leg: i + 1, name: `Runner ${i + 1}`, years: '', time: '--:--',
+  distance: '', difficulty: (i % 10) + 1, start: '--:-- PDT',
+  photo: FALLBACK_PHOTO, active: i === 0
 }));
+
+function getActiveRunner() {
+  return runners.find(r => r.active) || runners[0];
+}
+
+async function fetchRunners() {
+  try {
+    const res = await fetch(API_URL + '?t=' + Date.now());
+    const data = await res.json();
+    if (data.status === 'ok' && data.runners && data.runners.length) {
+      runners = data.runners.map(r => ({
+        ...r,
+        photo: r.photo || FALLBACK_PHOTO,
+        name: r.name || 'Runner ' + r.leg,
+        time: r.time || '--:--',
+        start: r.start || '--:-- PDT',
+        difficulty: parseInt(r.difficulty) || 5
+      }));
+      render();
+    }
+  } catch (err) {
+    console.log('Fetch error, using cached data:', err.message);
+  }
+}
+
+// Initial load + polling
+if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
+  fetchRunners();
+  setInterval(fetchRunners, POLL_INTERVAL);
+}
 
 function gaugeColor(d) {
   if (d <= 3) return '#22c55e';
@@ -428,6 +461,7 @@ function render() {
 
   const app = document.getElementById('app');
   const allCards = runners.map(createCard).join('');
+  const ar = getActiveRunner();
 
   const gridContent = allCards + allCards;
 
@@ -444,29 +478,29 @@ function render() {
       <div class="active-panel">
         <div class="active-info">
           <div class="label"><span class="pulse-dot"></span>Currently Running</div>
-          <div class="active-name">${runners[0].name}</div>
-          <div class="active-leg">Leg ${runners[0].leg}</div>
+          <div class="active-name">${ar.name}</div>
+          <div class="active-leg">Leg ${ar.leg}</div>
           <div class="active-stats">
             <div class="stat-box">
               <div class="stat-label">Distance</div>
-              <div class="stat-value">${runners[0].distance || '—'}</div>
+              <div class="stat-value">${ar.distance || '—'}</div>
             </div>
             <div class="gauge-wrap">
               <div class="gauge-bar">
-                <div class="gauge-fill" style="height:${runners[0].difficulty * 10}%;background:${gaugeColor(runners[0].difficulty)}"></div>
+                <div class="gauge-fill" style="height:${ar.difficulty * 10}%;background:${gaugeColor(ar.difficulty)}"></div>
               </div>
             </div>
             <div class="stat-box">
               <div class="stat-label">Started</div>
-              <div class="stat-value">${runners[0].start}</div>
+              <div class="stat-value">${ar.start}</div>
             </div>
           </div>
         </div>
         <div class="active-photo-col">
-          <img src="${runners[0].photo}" alt="${runners[0].name}" class="active-photo" />
+          <img src="${ar.photo}" alt="${ar.name}" class="active-photo" />
           <div class="active-badge-row">
             ${badgeSVG}
-            <span class="badge-years">${runners[0].years ? runners[0].years + ' yrs' : '—'}</span>
+            <span class="badge-years">${ar.years ? ar.years + ' yrs' : '—'}</span>
           </div>
         </div>
       </div>
