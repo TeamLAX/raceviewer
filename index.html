@@ -346,6 +346,15 @@
     @media (max-width: 600px)  {
       :root { --grid-cols: 2; }
       .bottom-cards-wrap { transform: scale(1); }
+      .grid-viewport {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: 50vh;
+      }
+      .grid-track {
+        transition: none !important;
+        transform: none !important;
+      }
     }
   </style>
 </head>
@@ -420,6 +429,9 @@ function render() {
   const app = document.getElementById('app');
   const allCards = runners.map(createCard).join('');
 
+  const isMobile = window.innerWidth <= 600;
+  const gridContent = isMobile ? allCards : allCards + allCards;
+
   app.innerHTML = `
     <div class="header">
       <div class="header-info">
@@ -462,7 +474,7 @@ function render() {
     </div>
     <div class="grid-viewport">
       <div class="grid-track" id="gridTrack">
-        ${allCards}${allCards}
+        ${gridContent}
       </div>
     </div>`;
 
@@ -492,6 +504,9 @@ function render() {
 function initCarousel() {
   const track = document.getElementById('gridTrack');
   if (!track) return;
+
+  /* On mobile (<=600px), skip auto-scroll — user scrolls with touch */
+  if (window.innerWidth <= 600) return;
 
   const style = getComputedStyle(document.documentElement);
   const cols = parseInt(style.getPropertyValue('--grid-cols')) || 5;
