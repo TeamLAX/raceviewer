@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baker-to-Vegas | Team LAX 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow+Condensed:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --side-margin: 2.5rem;
+      --grid-cols: 5;
+      --card-gap: 10px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Barlow Condensed', sans-serif;
+      background: linear-gradient(135deg, #3b2416 0%, #7a3a12 50%, #2f1b13 100%);
+      color: #fff;
+    }
+    h1, .leg-label { font-family: 'Oswald', sans-serif; }
+
+    #app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 2rem var(--side-margin) 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+    .header-info { flex: 1; min-width: 260px; }
+    .header h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .header h1 span { color: #f59e0b; }
+    .captain {
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 300;
+      color: #fbbf24;
+      letter-spacing: 0.04em;
+    }
+
+    /* Bottom cards wrapper — scales both cards together */
+    .bottom-cards-wrap {
+      margin: 0 var(--side-margin);
+      flex-shrink: 0;
+      transform: scale(1.5);
+      transform-origin: bottom left;
+      margin-bottom: 20px;
+      width: fit-content;
+    }
+
+    /* Total Run Time card — matches active-panel style */
+    .total-time-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 1.2rem 1.6rem;
+      width: fit-content;
+      backdrop-filter: blur(6px);
+      margin-bottom: 20px;
+    }
+    .total-time-card .total-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #fdba74;
+      margin-bottom: 0.25rem;
+    }
+    .total-time-card .total-value {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    /* Active runner panel — left-aligned above cards */
+    .active-panel {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 1.2rem 1.6rem;
+      width: fit-content;
+      backdrop-filter: blur(6px);
+      display: flex;
+      gap: 14px;
+      align-items: stretch;
+    }
+    .active-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .active-panel .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #fdba74;
+      margin-bottom: 0.25rem;
+    }
+    .active-panel .active-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .active-panel .active-leg {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #fdba74;
+      margin-top: 2px;
+    }
+    .active-panel .start-time { font-size: 0.7rem; color: rgba(255,255,255,0.6); margin-top: 4px; }
+    .active-stats {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: auto;
+    }
+    .active-stats .stat-box { text-align: center; }
+    .active-stats .stat-label {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 2px;
+    }
+    .active-stats .stat-value {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.65rem;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    .active-stats .gauge-wrap {
+      flex-shrink: 0;
+      margin-left: -3px;
+    }
+    .active-stats .gauge-bar {
+      width: 5px;
+      height: 28px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+    .active-stats .gauge-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      border-radius: 3px;
+    }
+    .active-photo-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .active-photo {
+      width: 64px;
+      height: 64px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.4);
+      display: block;
+    }
+    .active-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 4px;
+    }
+    .active-badge-row .badge-icon { width: 12px; height: 12px; flex-shrink: 0; }
+    .active-badge-row .badge-years { font-size: 0.55rem; color: rgba(255,255,255,0.55); white-space: nowrap; }
+    .pulse-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: pulse 1.4s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ── Grid carousel area — pinned to bottom ── */
+    .grid-viewport {
+      padding: 0 var(--side-margin);
+      margin-bottom: 30px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .grid-track {
+      display: grid;
+      grid-template-columns: repeat(var(--grid-cols), 1fr);
+      gap: var(--card-gap);
+      transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Card ── */
+    .card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .card:hover { background: rgba(255,255,255,0.12); }
+
+    /* Card top: photo left, leg/name right */
+    .card-top {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .card-photo-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .card-photo {
+      width: 56px;
+      height: 56px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.4);
+      display: block;
+    }
+    /* Badge + years row beneath photo */
+    .card-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 4px;
+    }
+    .badge-icon {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+    .badge-years {
+      font-size: 0.6rem;
+      color: rgba(255,255,255,0.55);
+      white-space: nowrap;
+    }
+
+    /* Identity: leg at top, name at bottom — spans photo height */
+    .card-identity {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 56px; /* match photo */
+    }
+    .card-leg {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #fdba74;
+      line-height: 1;
+    }
+    .card-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1;
+    }
+
+    /* ── Stats row ── */
+    .card-stats {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stat-box {
+      text-align: center;
+      flex: 1;
+    }
+    .stat-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 2px;
+    }
+    .stat-value {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 3px 6px;
+      border-radius: 4px;
+    }
+
+    /* Gauge — no label, positioned near Distance */
+    .gauge-wrap {
+      flex-shrink: 0;
+      margin-left: -3px;
+    }
+    .gauge-bar {
+      width: 6px;
+      height: 36px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+    .gauge-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      border-radius: 3px;
+      transition: height 0.3s;
+    }
+
+    @media (max-width: 1100px) { :root { --grid-cols: 4; } }
+    @media (max-width: 860px)  { :root { --grid-cols: 3; } }
+    @media (max-width: 600px)  { :root { --grid-cols: 2; } }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const runners = Array.from({ length: 20 }, (_, i) => ({
+  leg: i + 1,
+  name: `Runner ${i + 1}`,
+  years: "",
+  time: "--:--",
+  distance: "",
+  difficulty: (i % 10) + 1,
+  start: "--:-- PDT",
+  photo: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=500&q=80"
+}));
+
+function gaugeColor(d) {
+  if (d <= 3) return '#22c55e';
+  if (d <= 7) return '#facc15';
+  return '#ef4444';
+}
+
+/* Tiny inline SVG police badge */
+const badgeSVG = `<svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 1L14.5 4H18L19 8L22 10L20.5 13.5L21 17L18 18.5L16 22H8L6 18.5L3 17L3.5 13.5L2 10L5 8L6 4H9.5L12 1Z" fill="#d4a043" stroke="#f5c542" stroke-width="0.8"/>
+  <circle cx="12" cy="11.5" r="3.5" fill="none" stroke="#8B6914" stroke-width="0.8"/>
+  <path d="M12 9L12.7 10.5H14.2L13 11.4L13.4 13L12 12.1L10.6 13L11 11.4L9.8 10.5H11.3L12 9Z" fill="#8B6914"/>
+</svg>`;
+
+function createCard(r) {
+  const yearsDisplay = r.years ? `${r.years} yrs` : '—';
+  return `
+  <div class="card">
+    <div class="card-top">
+      <div class="card-photo-col">
+        <img src="${r.photo}" alt="${r.name}" class="card-photo" />
+        <div class="card-badge-row">
+          ${badgeSVG}
+          <span class="badge-years">${yearsDisplay}</span>
+        </div>
+      </div>
+      <div class="card-identity">
+        <div class="card-leg">Leg ${r.leg}</div>
+        <div class="card-name">${r.name}</div>
+      </div>
+    </div>
+    <div class="card-stats">
+      <div class="stat-box">
+        <div class="stat-label">Distance</div>
+        <div class="stat-value">${r.distance || '—'}</div>
+      </div>
+      <div class="gauge-wrap">
+        <div class="gauge-bar">
+          <div class="gauge-fill" style="height:${r.difficulty * 10}%;background:${gaugeColor(r.difficulty)}"></div>
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Run Time</div>
+        <div class="stat-value">${r.time}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Carousel state ── */
+let carouselTimer = null;
+
+function render() {
+  if (carouselTimer) clearInterval(carouselTimer);
+
+  const app = document.getElementById('app');
+  const allCards = runners.map(createCard).join('');
+
+  app.innerHTML = `
+    <div class="header">
+      <div class="header-info">
+        <h1>Baker-to-Vegas <span>|</span> Team LAX <span>2026</span></h1>
+        <div class="captain">Team Captain Roxanna Carlos<br/>Airport Police, Sergeant</div>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bottom-cards-wrap">
+      <div class="total-time-card" id="totalTime"></div>
+      <div class="active-panel">
+        <div class="active-info">
+          <div class="label"><span class="pulse-dot"></span>Currently Running</div>
+          <div class="active-name">${runners[0].name}</div>
+          <div class="active-leg">Leg ${runners[0].leg}</div>
+          <div class="active-stats">
+            <div class="stat-box">
+              <div class="stat-label">Distance</div>
+              <div class="stat-value">${runners[0].distance || '—'}</div>
+            </div>
+            <div class="gauge-wrap">
+              <div class="gauge-bar">
+                <div class="gauge-fill" style="height:${runners[0].difficulty * 10}%;background:${gaugeColor(runners[0].difficulty)}"></div>
+              </div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Started</div>
+              <div class="stat-value">${runners[0].start}</div>
+            </div>
+          </div>
+        </div>
+        <div class="active-photo-col">
+          <img src="${runners[0].photo}" alt="${runners[0].name}" class="active-photo" />
+          <div class="active-badge-row">
+            ${badgeSVG}
+            <span class="badge-years">${runners[0].years ? runners[0].years + ' yrs' : '—'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-viewport">
+      <div class="grid-track" id="gridTrack">
+        ${allCards}${allCards}
+      </div>
+    </div>`;
+
+  requestAnimationFrame(() => {
+    /* Compute aggregate total time */
+    let totalMinutes = 0;
+    runners.forEach(r => {
+      if (r.time && r.time !== '--:--') {
+        const parts = r.time.split(':');
+        if (parts.length === 2) totalMinutes += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        if (parts.length === 3) totalMinutes += parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+      }
+    });
+    const hrs = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    const totalDisplay = totalMinutes > 0
+      ? `${hrs}h ${String(mins).padStart(2,'0')}m`
+      : '--:--';
+    document.getElementById('totalTime').innerHTML = `
+      <div class="total-label">Total Run Time</div>
+      <div class="total-value">${totalDisplay}</div>`;
+
+    initCarousel();
+  });
+}
+
+function initCarousel() {
+  const track = document.getElementById('gridTrack');
+  if (!track) return;
+
+  const style = getComputedStyle(document.documentElement);
+  const cols = parseInt(style.getPropertyValue('--grid-cols')) || 5;
+  const totalRunners = runners.length;
+  const originalRowCount = Math.ceil(totalRunners / cols);
+  const VISIBLE_ROWS = 2;
+  const INTERVAL_MS = 20000;
+
+  if (originalRowCount <= VISIBLE_ROWS) return;
+
+  const cards = track.querySelectorAll('.card');
+  if (!cards.length) return;
+
+  const gap = parseInt(style.getPropertyValue('--card-gap')) || 10;
+  const rowOffset = cards[0].offsetHeight + gap;
+
+  /* Lock viewport to exactly 2 rows */
+  const viewport = track.parentElement;
+  viewport.style.height = (rowOffset * VISIBLE_ROWS - gap) + 'px';
+
+  let currentTopRow = 0;
+
+  carouselTimer = setInterval(() => {
+    currentTopRow++;
+
+    /* When we've scrolled past all original rows, seamlessly jump back */
+    if (currentTopRow >= originalRowCount) {
+      track.style.transition = 'none';
+      track.style.transform = 'translateY(0)';
+      currentTopRow = 0;
+      /* Let the jump render, then re-enable transition and advance */
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          currentTopRow = 1;
+          track.style.transition = 'transform 0.9s cubic-bezier(0.4, 0, 0.2, 1)';
+          track.style.transform = `translateY(-${currentTopRow * rowOffset}px)`;
+        });
+      });
+      return;
+    }
+
+    track.style.transform = `translateY(-${currentTopRow * rowOffset}px)`;
+  }, INTERVAL_MS);
+}
+
+render();
+
+/* Recalc on resize */
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 250);
+});
+</script>
+</body>
+</html>
