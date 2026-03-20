@@ -429,8 +429,7 @@ function render() {
   const app = document.getElementById('app');
   const allCards = runners.map(createCard).join('');
 
-  const isMobile = window.innerWidth <= 600;
-  const gridContent = isMobile ? allCards : allCards + allCards;
+  const gridContent = allCards + allCards;
 
   app.innerHTML = `
     <div class="header">
@@ -505,8 +504,31 @@ function initCarousel() {
   const track = document.getElementById('gridTrack');
   if (!track) return;
 
-  /* On mobile (<=600px), skip auto-scroll — user scrolls with touch */
-  if (window.innerWidth <= 600) return;
+  /* On mobile (<=600px), enable infinite touch scroll instead of auto-scroll */
+  if (window.innerWidth <= 600) {
+    const viewport = track.parentElement;
+    const style = getComputedStyle(document.documentElement);
+    const cols = parseInt(style.getPropertyValue('--grid-cols')) || 2;
+    const cards = track.querySelectorAll('.card');
+    if (!cards.length) return;
+    const gap = parseInt(style.getPropertyValue('--card-gap')) || 10;
+    const rowOffset = cards[0].offsetHeight + gap;
+    const originalRows = Math.ceil(runners.length / cols);
+    const originalHeight = originalRows * rowOffset - gap;
+
+    viewport.addEventListener('scroll', () => {
+      const scrollPos = viewport.scrollTop;
+      /* When scrolled past the original set, jump back seamlessly */
+      if (scrollPos >= originalHeight + gap) {
+        viewport.scrollTop = scrollPos - originalHeight - gap;
+      }
+      /* If somehow scrolled above start, jump forward */
+      if (scrollPos <= 0) {
+        viewport.scrollTop = scrollPos + originalHeight + gap;
+      }
+    });
+    return;
+  }
 
   const style = getComputedStyle(document.documentElement);
   const cols = parseInt(style.getPropertyValue('--grid-cols')) || 5;
