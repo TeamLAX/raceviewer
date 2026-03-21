@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Baker-to-Vegas | Team LAX 2026</title>
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow+Condensed:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
   <style>
     :root {
       --side-margin: 2.5rem;
@@ -15,11 +17,11 @@
     html, body {
       height: 100%;
       overflow: hidden;
-      font-family: 'Barlow Condensed', sans-serif;
+      font-family: 'Lexend Deca', sans-serif;
       background: linear-gradient(135deg, #3b2416 0%, #7a3a12 50%, #2f1b13 100%);
       color: #fff;
     }
-    h1, .leg-label { font-family: 'Oswald', sans-serif; }
+    h1, .leg-label { font-family: 'Gabarito', sans-serif; }
 
     #app {
       height: 100%;
@@ -81,7 +83,7 @@
       margin-bottom: 0.25rem;
     }
     .total-time-card .total-value {
-      font-family: 'Oswald', sans-serif;
+      font-family: 'Gabarito', sans-serif;
       font-size: 1.4rem;
       font-weight: 700;
       line-height: 1.1;
@@ -111,7 +113,7 @@
       margin-bottom: 0.25rem;
     }
     .active-panel .active-name {
-      font-family: 'Oswald', sans-serif;
+      font-family: 'Gabarito', sans-serif;
       font-size: 1.4rem;
       font-weight: 700;
       line-height: 1.1;
@@ -275,7 +277,7 @@
       height: 56px; /* match photo */
     }
     .card-leg {
-      font-family: 'Oswald', sans-serif;
+      font-family: 'Gabarito', sans-serif;
       font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -283,8 +285,9 @@
       line-height: 1;
     }
     .card-name {
-      font-weight: 600;
-      font-size: 0.95rem;
+      font-family: 'Gabarito', sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -379,11 +382,15 @@ function getActiveRunner() {
   return runners.find(r => r.active) || runners[0];
 }
 
-async function fetchRunners() {
-  try {
-    const res = await fetch(API_URL + '?t=' + Date.now());
-    const data = await res.json();
-    if (data.status === 'ok' && data.runners && data.runners.length) {
+function fetchRunners() {
+  // Use JSONP to bypass CORS — injects a script tag
+  const cbName = '_b2v_cb_' + Date.now();
+  window[cbName] = function(data) {
+    delete window[cbName];
+    const script = document.getElementById(cbName);
+    if (script) script.remove();
+    
+    if (data && data.status === 'ok' && data.runners && data.runners.length) {
       runners = data.runners.map(r => ({
         ...r,
         photo: r.photo || FALLBACK_PHOTO,
@@ -394,9 +401,17 @@ async function fetchRunners() {
       }));
       render();
     }
-  } catch (err) {
-    console.log('Fetch error, using cached data:', err.message);
-  }
+  };
+  
+  const script = document.createElement('script');
+  script.id = cbName;
+  script.src = API_URL + '?callback=' + cbName + '&t=' + Date.now();
+  script.onerror = function() {
+    delete window[cbName];
+    script.remove();
+    console.log('JSONP load failed, using cached data');
+  };
+  document.head.appendChild(script);
 }
 
 // Initial load + polling
