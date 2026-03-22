@@ -387,10 +387,13 @@
       font-family: 'Gabarito', sans-serif;
       font-weight: 700;
       font-size: 1.15rem;
-      white-space: nowrap;
+      white-space: normal;
       overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.15;
+      text-align: left;
     }
 
     /* ── Stats row ── */
