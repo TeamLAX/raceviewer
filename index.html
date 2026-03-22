@@ -290,7 +290,7 @@
     }
     /* Police badge beneath photo */
     .card-badge-row {
-      margin-top: -7px;
+      margin-top: -4px;
       position: relative;
       z-index: 1;
     }
@@ -336,7 +336,7 @@
 
     /* Active panel badge */
     .active-badge-row {
-      margin-top: -7px;
+      margin-top: -4px;
       position: relative;
       z-index: 1;
     }
@@ -447,15 +447,52 @@
     @media (max-width: 600px)  {
       :root { --grid-cols: 2; }
       .bottom-cards-wrap { transform: scale(1); }
+      
+      /* Center the grid cards */
+      .grid-track {
+        transition: none !important;
+        transform: none !important;
+        justify-items: center;
+      }
       .grid-viewport {
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         max-height: 50vh;
       }
-      .grid-track {
-        transition: none !important;
-        transform: none !important;
+      
+      /* Reorganize mobile layout */
+      #app {
+        height: auto;
+        min-height: 100vh;
       }
+      .header {
+        padding: 1rem var(--side-margin) 0.5rem;
+      }
+      .header h1 { font-size: 1.6rem; }
+      
+      /* Stopwatch stays visible at top of bottom section */
+      .total-time-card {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(43,28,16,0.95);
+        border-radius: 0 0 12px 12px;
+        margin-bottom: 5px;
+      }
+      
+      /* Collapse active panel on mobile */
+      .active-panel {
+        padding: 0.6rem 1rem;
+        gap: 8px;
+      }
+      .active-panel .active-name { font-size: 1rem; }
+      .active-panel .active-leg { font-size: 0.6rem; }
+      .active-photo {
+        width: 50px !important;
+        height: 50px !important;
+      }
+      .active-stats .stat-value { font-size: 0.55rem; }
+      .active-stats .stat-label { font-size: 0.45rem; }
     }
     /* ── Fullscreen Runner Overlay ── */
     .runner-overlay {
