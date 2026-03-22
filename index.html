@@ -599,17 +599,8 @@ let stopwatchStart = null;
 function startStopwatch() {
   if (stopwatchInterval) clearInterval(stopwatchInterval);
   
-  // Calculate total completed time from all runners
-  let totalSeconds = 0;
-  runners.forEach(r => {
-    if (r.time && r.time !== '--:--') {
-      const parts = r.time.split(':');
-      if (parts.length === 2) totalSeconds += parseInt(parts[0]) * 60 + parseInt(parts[1]);
-      if (parts.length === 3) totalSeconds += parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
-    }
-  });
-  
-  stopwatchStart = Date.now() - (totalSeconds * 1000);
+  // Race start: March 22, 2026 07:43:00 PDT (UTC-7)
+  stopwatchStart = new Date('2026-03-22T07:43:00-07:00').getTime();
   
   const el = document.getElementById('totalTime');
   if (!el) return;
