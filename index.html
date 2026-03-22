@@ -65,7 +65,7 @@
       width: fit-content;
     }
 
-    /* Total Run Time card — matches active-panel style */
+    /* Stopwatch card */
     .total-time-card {
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.12);
@@ -87,6 +87,50 @@
       font-size: 1.4rem;
       font-weight: 700;
       line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Halfway split-flap effect on Running Since value */
+    .halfway-split {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(to bottom, #f59e0b 50%, rgba(255,255,255,0.12) 50%) !important;
+      color: transparent !important;
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    /* Fallback for browsers that don't support background-clip:text well */
+    @supports not (-webkit-background-clip: text) {
+      .halfway-split {
+        color: #f59e0b !important;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.12) 50%, #f59e0b 50%) !important;
+      }
+    }
+    .stat-value.halfway-split {
+      position: relative;
+      color: #fff !important;
+      background: none !important;
+      -webkit-background-clip: unset;
+      background-clip: unset;
+      overflow: hidden;
+    }
+    .stat-value.halfway-split::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 50%;
+      background: #f59e0b;
+      border-radius: 4px 4px 0 0;
+      z-index: -1;
+    }
+    .stat-value.halfway-split::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 50%;
+      background: rgba(255,255,255,0.12);
+      border-radius: 0 0 4px 4px;
+      z-index: -1;
     }
 
     /* Active runner panel — left-aligned above cards */
@@ -548,6 +592,52 @@ function gaugeColor(d) {
   return '#ef4444';
 }
 
+/* ── Stopwatch ── */
+let stopwatchInterval = null;
+let stopwatchStart = null;
+
+function startStopwatch() {
+  if (stopwatchInterval) clearInterval(stopwatchInterval);
+  
+  // Calculate total completed time from all runners
+  let totalSeconds = 0;
+  runners.forEach(r => {
+    if (r.time && r.time !== '--:--') {
+      const parts = r.time.split(':');
+      if (parts.length === 2) totalSeconds += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+      if (parts.length === 3) totalSeconds += parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+    }
+  });
+  
+  stopwatchStart = Date.now() - (totalSeconds * 1000);
+  
+  const el = document.getElementById('totalTime');
+  if (!el) return;
+  
+  el.innerHTML = `
+    <div class="total-label">Stop Watch</div>
+    <div class="total-value" id="stopwatchDisplay">00:00:00.00</div>`;
+  
+  function updateStopwatch() {
+    const elapsed = Date.now() - stopwatchStart;
+    const hrs = Math.floor(elapsed / 3600000);
+    const mins = Math.floor((elapsed % 3600000) / 60000);
+    const secs = Math.floor((elapsed % 60000) / 1000);
+    const hundredths = Math.floor((elapsed % 1000) / 10);
+    
+    const display = String(hrs).padStart(2, '0') + ':' +
+                    String(mins).padStart(2, '0') + ':' +
+                    String(secs).padStart(2, '0') + '.' +
+                    String(hundredths).padStart(2, '0');
+    
+    const displayEl = document.getElementById('stopwatchDisplay');
+    if (displayEl) displayEl.textContent = display;
+  }
+  
+  updateStopwatch();
+  stopwatchInterval = setInterval(updateStopwatch, 10);
+}
+
 /* Tiny inline SVG police badge */
 const badgeSVG = `<svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M12 1L14.5 4H18L19 8L22 10L20.5 13.5L21 17L18 18.5L16 22H8L6 18.5L3 17L3.5 13.5L2 10L5 8L6 4H9.5L12 1Z" fill="#d4a043" stroke="#f5c542" stroke-width="0.8"/>
@@ -628,8 +718,8 @@ function render() {
               </div>
             </div>
             <div class="stat-box">
-              <div class="stat-label">Started</div>
-              <div class="stat-value">${ar.start}</div>
+              <div class="stat-label">Running Since</div>
+              <div class="stat-value ${ar.halfway ? 'halfway-split' : ''}">${ar.start}</div>
             </div>
           </div>
         </div>
@@ -649,23 +739,8 @@ function render() {
     </div>`;
 
   requestAnimationFrame(() => {
-    /* Compute aggregate total time */
-    let totalMinutes = 0;
-    runners.forEach(r => {
-      if (r.time && r.time !== '--:--') {
-        const parts = r.time.split(':');
-        if (parts.length === 2) totalMinutes += parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        if (parts.length === 3) totalMinutes += parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
-      }
-    });
-    const hrs = Math.floor(totalMinutes / 60);
-    const mins = totalMinutes % 60;
-    const totalDisplay = totalMinutes > 0
-      ? `${hrs}h ${String(mins).padStart(2,'0')}m`
-      : '--:--';
-    document.getElementById('totalTime').innerHTML = `
-      <div class="total-label">Total Run Time</div>
-      <div class="total-value">${totalDisplay}</div>`;
+    /* Start live stopwatch */
+    startStopwatch();
 
     initCarousel();
   });
