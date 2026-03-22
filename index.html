@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
       --side-margin: 2.5rem;
@@ -199,6 +201,17 @@
       flex-shrink: 0;
       margin-left: -3px;
     }
+    .active-hint {
+      font-size: 0.4rem;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+      margin-top: 4px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+    }
+    .active-hint:hover, .active-hint:active {
+      color: #f59e0b;
+    }
     .active-stats .gauge-bar {
       width: 5px;
       height: 28px;
@@ -316,7 +329,7 @@
       position: relative;
       z-index: 1;
       font-family: 'Gabarito', sans-serif;
-      font-size: 0.55rem;
+      font-size: 0.6rem;
       font-weight: 900;
       color: #fff;
       line-height: 1;
@@ -346,7 +359,7 @@
       height: 40px;
     }
     .active-badge-row .badge-yrs {
-      font-size: 0.65rem;
+      font-size: 0.72rem;
       margin-top: 14px;
     }
     .active-badge-row .badge-label {
@@ -359,7 +372,7 @@
       height: 60px;
     }
     .overlay-badge-row .badge-yrs {
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       margin-top: 20px;
     }
     .overlay-badge-row .badge-label {
@@ -535,6 +548,100 @@
         width: 100%;
       }
     }
+    /* ── Distance link styling ── */
+    .distance-link {
+      text-decoration: underline;
+      text-decoration-color: rgba(245,158,11,0.4);
+      text-underline-offset: 2px;
+    }
+
+    /* ── Stage Detail Overlay ── */
+    .stage-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 600;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .stage-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .stage-overlay-header {
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(245,158,11,0.2);
+    }
+    .stage-overlay-header h2 {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #f59e0b;
+    }
+    .stage-overlay-close {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .stage-map-container {
+      flex: 1;
+      position: relative;
+    }
+    .stage-map-container #stageMap {
+      width: 100%;
+      height: 100%;
+    }
+    .stage-info-bar {
+      padding: 12px 20px;
+      background: rgba(26,17,8,0.95);
+      border-top: 1px solid rgba(245,158,11,0.2);
+      flex-shrink: 0;
+    }
+    .stage-info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .stage-info-item {
+      text-align: center;
+    }
+    .stage-info-item .si-label {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 2px;
+    }
+    .stage-info-item .si-value {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .stage-desc-text {
+      margin-top: 10px;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.4;
+    }
+    .stage-gps-text {
+      margin-top: 6px;
+      font-size: 0.6rem;
+      color: rgba(255,255,255,0.35);
+      font-variant-numeric: tabular-nums;
+    }
+
     /* ── Fullscreen Runner Overlay ── */
     .runner-overlay {
       position: fixed;
@@ -672,6 +779,16 @@
 <body>
 <div id="app"></div>
 <div class="runner-overlay" id="runnerOverlay" onclick="closeOverlay()"></div>
+<div class="stage-overlay" id="stageOverlay">
+  <div class="stage-overlay-header">
+    <h2 id="stageOverlayTitle">Stage</h2>
+    <button class="stage-overlay-close" onclick="closeStageDetail()">✕</button>
+  </div>
+  <div class="stage-map-container">
+    <div id="stageMap"></div>
+  </div>
+  <div class="stage-info-bar" id="stageInfoBar"></div>
+</div>
 <script>
 // ═══════════════════════════════════════════════════
 // CONFIG — Replace with your deployed Apps Script URL
@@ -804,7 +921,7 @@ function createCard(r) {
         </div>
       </div>
       <div class="card-identity">
-        <div class="card-leg">Leg ${r.leg}</div>
+        <div class="card-leg">Stage ${r.leg}</div>
         <div class="card-name">${r.name}</div>
       </div>
     </div>
@@ -852,11 +969,11 @@ function render() {
         <div class="active-info">
           <div class="label"><span class="pulse-dot"></span>Currently Running</div>
           <div class="active-name">${ar.name}</div>
-          <div class="active-leg">Leg ${ar.leg}</div>
+          <div class="active-leg">Stage ${ar.leg}</div>
           <div class="active-stats">
-            <div class="stat-box">
+            <div class="stat-box" onclick="openStageDetail(${ar.leg})" style="cursor:pointer">
               <div class="stat-label">Distance</div>
-              <div class="stat-value">${ar.distance || '—'}</div>
+              <div class="stat-value distance-link">${ar.distance || '—'}</div>
             </div>
             <div class="gauge-wrap">
               <div class="gauge-bar">
@@ -868,8 +985,8 @@ function render() {
               <div class="stat-value ${ar.halfway ? 'halfway-split' : ''}">${ar.start}</div>
             </div>
           </div>
+          <div class="active-hint" onclick="openStageDetail(${ar.leg})">tap distance for stage &amp; B2V route details</div>
         </div>
-        <div class="active-photo-col">
           <img src="${ar.photo}" alt="${ar.name}" class="active-photo" />
           <div class="active-badge-row">
             ${makeBadge(ar.years || '')}
@@ -1009,7 +1126,7 @@ function openRunnerOverlay(leg) {
   
   overlay.innerHTML = `
     <div class="overlay-card" onclick="event.stopPropagation()">
-      <div class="overlay-leg">Leg ${r.leg}</div>
+      <div class="overlay-leg">Stage ${r.leg}</div>
       <img src="${r.photo}" alt="${r.name}" class="overlay-photo" />
       <div class="overlay-name">${r.name}</div>
       <div class="overlay-badge-row">
@@ -1070,6 +1187,132 @@ function closeOverlay() {
   if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
   const overlay = document.getElementById('runnerOverlay');
   overlay.classList.remove('visible');
+}
+
+/* ── Stage Detail Map Data (from B2V All_Stages PDF) ── */
+const stageData = [
+  null, // index 0 unused
+  { leg:1, lat:35.58200, lng:-116.22105, dist:"5.4 mi", elev:"~1,050 ft", diff:"Flat desert", desc:"Start line is about 24.3 miles north of Baker and I-15 on Highway 127. RV Support, HAM, Command Post Vehicle, and Portable Toilets at exchange.", gps:"35° 34.920'N, 116° 13.263'W" },
+  { leg:2, lat:35.63272, lng:-116.29048, dist:"4.0 mi", elev:"~1,180 ft", diff:"Flat", desc:"Begins on Highway 127 about 30 miles north of Baker. Stage exit to the north. Parking, RV Support, Medics, HAM on site.", gps:"35° 37.963'N, 116° 17.429'W" },
+  { leg:3, lat:35.68953, lng:-116.30238, dist:"4.2 mi", elev:"~1,350 ft", diff:"Flat", desc:"Begins 34 miles north of Baker near Dumont Dunes Road. All runners park on Dumont Dunes Road. Portable toilets, Medic, HAM, RV Support on site.", gps:"35° 41.372'N, 116° 18.143'W" },
+  { leg:4, lat:35.74935, lng:-116.31543, dist:"5.1 mi", elev:"~1,520 ft", diff:"Slight incline", desc:"About 38 miles north of Baker, 18 miles south of Shoshone. No highway parking. All team parking around the circle area.", gps:"35° 44.961'N, 116° 18.926'W" },
+  { leg:5, lat:35.81552, lng:-116.33015, dist:"6.1 mi", elev:"~1,800 ft", diff:"Gradual climb", desc:"About 43 miles north of Baker, 13 miles south of Shoshone. Light tower setup across Highway 127 from exchange point. Runner check-in on site.", gps:"35° 48.931'N, 116° 19.809'W" },
+  { leg:6, lat:35.87695, lng:-116.26778, dist:"6.1 mi", elev:"~2,100 ft", diff:"Rolling hills", desc:"About 7 miles south of Shoshone, ~50 miles north of Baker on Hwy 127. No highway parking. Runner parking east of exchange.", gps:"35° 52.617'N, 116° 16.067'W" },
+  { leg:7, lat:35.96145, lng:-116.26790, dist:"6.2 mi", elev:"~1,600 ft", diff:"Descent", desc:"Less than a mile south of Shoshone, about 30 miles from Pahrump. RV Support, Medic, HAM, Light Tower, Parking on site.", gps:"35° 57.687'N, 116° 16.074'W" },
+  { leg:8, lat:36.00098, lng:-116.19802, dist:"6.6 mi", elev:"~1,800 ft", diff:"Mixed terrain", desc:"About 22 miles south of Pahrump on Highway 372/178, 5.5 miles northeast of Shoshone. Exit stage northbound. Team parking on Chicago Valley Rd.", gps:"36° 00.059'N, 116° 11.881'W" },
+  { leg:9, lat:36.09523, lng:-116.18397, dist:"7.5 mi", elev:"~2,400 ft", diff:"Climbing", desc:"About 15 miles south of Pahrump on Highway 372. Manual timing. Parking along the highway — can be very congested. Light tower on site.", gps:"36° 05.714'N, 116° 11.038'W" },
+  { leg:10, lat:36.16825, lng:-116.10282, dist:"5.8 mi", elev:"~2,800 ft", diff:"Moderate climb", desc:"Both in and out traffic use this driveway. Team parking and light tower on site. Portable toilets, RV Support, HAM, Medic.", gps:"36° 10.095'N, 116° 06.169'W" },
+  { leg:11, lat:36.20500, lng:-116.01242, dist:"5.3 mi", elev:"~2,700 ft", diff:"Flat approach", desc:"Highway 372 at Blagg Road, 1.5 miles south of Highway 160. Complex baton exchange with traffic cone separation between lanes.", gps:"36° 12.300'N, 116° 00.745'W" },
+  { leg:12, lat:36.17638, lng:-115.93198, dist:"4.7 mi", elev:"~2,760 ft", diff:"Flat", desc:"About 50 miles west of I-15 on Highway 160, 4 miles east of Pahrump. Team parking on Ironwood Rd. Light tower on site.", gps:"36° 10.583'N, 115° 55.919'W" },
+  { leg:13, lat:36.13272, lng:-115.86677, dist:"6.9 mi", elev:"~3,200 ft", diff:"Gradual climb", desc:"About 8 miles east of Pahrump, 44 miles west of I-15 on Highway 160. All runner parking east of exchange. No parking across highway.", gps:"36° 07.963'N, 115° 52.006'W" },
+  { leg:14, lat:36.07305, lng:-115.76897, dist:"10.7 mi", elev:"~4,200 ft", diff:"Major climb — longest leg", desc:"Exchange point re-graded with E/B 160 right turn lane. All runner parking on Tecopa Road. Barely room for two small vehicles at exchange. Light towers on site.", gps:"36° 04.383'N, 115° 46.138'W" },
+  { leg:15, lat:36.00595, lng:-115.60615, dist:"6.4 mi", elev:"~4,800 ft", diff:"Mountain terrain", desc:"All vehicles enter and exit using construction gate. No shoulder parking. No vehicle access on east side. Light towers on site.", gps:"36° 00.357'N, 115° 36.369'W" },
+  { leg:16, lat:36.01288, lng:-115.49937, dist:"5.8 mi", elev:"5,472 ft", diff:"Summit — highest point", desc:"Very challenging baton hand-off. Critically important follow vehicle stays in shoulder lane. Sloping downhill entry and uphill exit for runners. Crowded exchange area.", gps:"36° 00.773'N, 115° 29.962'W" },
+  { leg:17, lat:36.01417, lng:-115.42355, dist:"8.3 mi", elev:"~4,600 ft", diff:"Descent from summit", desc:"Runners from Las Vegas must continue west on Hwy 160 to Late Night Trailhead turnaround, U-turn and return eastbound to stage start.", gps:"36° 00.850'N, 115° 25.413'W" },
+  { leg:18, lat:36.02083, lng:-115.28833, dist:"6.3 mi", elev:"~3,600 ft", diff:"Descent into valley", desc:"N/E Corner of S. El Capitan Way & Blue Diamond Rd. Team parking on site. Light tower, RV Support, Medics, Timers.", gps:"36° 01'15\"N, 115° 17'18\"W" },
+  { leg:19, lat:36.10460, lng:-115.29690, dist:"5.6 mi", elev:"~2,800 ft", diff:"Urban flat", desc:"4670 South Fort Apache Road. Runner enters from south, exits north. Team parking in lot to south. RV Support, HAM, Medic on site.", gps:"36° 06.276'N, 115° 17.814'W" },
+  { leg:20, lat:36.12900, lng:-115.22700, dist:"3.2 mi", elev:"~2,200 ft", diff:"Urban flat — final leg", desc:"Desert Inn at Jones Ave to Rio Hotel & Casino. Runner directed onto sidewalk. Exchange chute on dirt lot. Finish Line in the Pavilion at the Rio.", gps:"36° 07.740'N, 115° 13.620'W" }
+];
+
+/* ── Stage Detail Overlay ── */
+let stageMap = null;
+
+function openStageDetail(leg) {
+  const stage = stageData[leg];
+  if (!stage) return;
+  
+  const overlay = document.getElementById('stageOverlay');
+  document.getElementById('stageOverlayTitle').textContent = 'Stage ' + leg + (leg === 1 ? ' — Start' : leg === 20 ? ' — Finish' : '');
+  
+  document.getElementById('stageInfoBar').innerHTML = `
+    <div class="stage-info-grid">
+      <div class="stage-info-item">
+        <div class="si-label">Distance</div>
+        <div class="si-value">${stage.dist}</div>
+      </div>
+      <div class="stage-info-item">
+        <div class="si-label">Elevation</div>
+        <div class="si-value">${stage.elev}</div>
+      </div>
+      <div class="stage-info-item">
+        <div class="si-label">Terrain</div>
+        <div class="si-value">${stage.diff}</div>
+      </div>
+    </div>
+    <div class="stage-desc-text">${stage.desc}</div>
+    <div class="stage-gps-text">GPS: ${stage.gps}</div>`;
+  
+  overlay.classList.add('visible');
+  
+  // Initialize or update the map after overlay is visible
+  setTimeout(() => {
+    if (stageMap) {
+      stageMap.remove();
+      stageMap = null;
+    }
+    
+    stageMap = L.map('stageMap', {
+      center: [stage.lat, stage.lng],
+      zoom: 14,
+      zoomControl: true
+    });
+    
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 17,
+      attribution: '© OpenTopoMap'
+    }).addTo(stageMap);
+    
+    // Stage marker
+    const markerColor = leg === 1 ? '#22c55e' : leg === 20 ? '#ef4444' : '#f59e0b';
+    L.marker([stage.lat, stage.lng], {
+      icon: L.divIcon({
+        className: '',
+        html: '<div style="background:' + markerColor + ';color:#1a0f05;font-family:Gabarito,sans-serif;font-weight:800;font-size:13px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)">' + leg + '</div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      })
+    }).addTo(stageMap);
+    
+    // If not first or last stage, show connecting route to next/prev
+    if (leg > 1 && stageData[leg - 1]) {
+      const prev = stageData[leg - 1];
+      L.polyline([[prev.lat, prev.lng], [stage.lat, stage.lng]], {
+        color: '#f59e0b', weight: 3, opacity: 0.5, dashArray: '8,8'
+      }).addTo(stageMap);
+      L.marker([prev.lat, prev.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="background:rgba(255,255,255,0.2);color:#fff;font-family:Gabarito,sans-serif;font-weight:700;font-size:10px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,0.4)">' + (leg-1) + '</div>',
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        })
+      }).addTo(stageMap);
+    }
+    if (leg < 20 && stageData[leg + 1]) {
+      const next = stageData[leg + 1];
+      L.polyline([[stage.lat, stage.lng], [next.lat, next.lng]], {
+        color: '#f59e0b', weight: 3, opacity: 0.5, dashArray: '8,8'
+      }).addTo(stageMap);
+      L.marker([next.lat, next.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="background:rgba(255,255,255,0.2);color:#fff;font-family:Gabarito,sans-serif;font-weight:700;font-size:10px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,0.4)">' + (leg+1) + '</div>',
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        })
+      }).addTo(stageMap);
+    }
+    
+    stageMap.invalidateSize();
+  }, 100);
+}
+
+function closeStageDetail() {
+  document.getElementById('stageOverlay').classList.remove('visible');
+  if (stageMap) {
+    stageMap.remove();
+    stageMap = null;
+  }
 }
 </script>
 </body>
