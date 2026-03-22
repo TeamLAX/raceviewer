@@ -174,8 +174,8 @@
       flex-shrink: 0;
     }
     .active-photo {
-      width: 64px;
-      height: 64px;
+      width: 77px;
+      height: 77px;
       border-radius: 6px;
       object-fit: cover;
       border: 2px solid rgba(255,255,255,0.4);
@@ -221,7 +221,7 @@
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 10px;
-      padding: 10px;
+      padding: 20px 10px;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -242,8 +242,8 @@
       flex-shrink: 0;
     }
     .card-photo {
-      width: 56px;
-      height: 56px;
+      width: 67px;
+      height: 67px;
       border-radius: 6px;
       object-fit: cover;
       border: 2px solid rgba(255,255,255,0.4);
@@ -274,7 +274,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 56px; /* match photo */
+      height: 67px; /* match photo */
     }
     .card-leg {
       font-family: 'Gabarito', sans-serif;
@@ -359,10 +359,132 @@
         transform: none !important;
       }
     }
+    /* ── Fullscreen Runner Overlay ── */
+    .runner-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .runner-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .overlay-card {
+      background: linear-gradient(135deg, #3b2416 0%, #7a3a12 50%, #2f1b13 100%);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 90vw;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      transform: scale(0.85);
+      transition: transform 0.3s;
+    }
+    .runner-overlay.visible .overlay-card {
+      transform: scale(1);
+    }
+    .overlay-photo {
+      width: 160px;
+      height: 160px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.3);
+    }
+    .overlay-name {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.1;
+    }
+    .overlay-leg {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #fdba74;
+    }
+    .overlay-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .overlay-badge-row .badge-icon { width: 16px; height: 16px; }
+    .overlay-badge-row .badge-years { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+    .overlay-stats {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .overlay-stats .stat-box { text-align: center; }
+    .overlay-stats .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 4px;
+    }
+    .overlay-stats .stat-value {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 6px 14px;
+      border-radius: 6px;
+    }
+    .overlay-stats .gauge-bar {
+      width: 8px;
+      height: 48px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .overlay-stats .gauge-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      border-radius: 4px;
+    }
+    .overlay-timer {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .overlay-timer-bar {
+      height: 100%;
+      background: #f59e0b;
+      border-radius: 2px;
+      width: 100%;
+      transition: width 22s linear;
+    }
+    .overlay-timer-bar.running { width: 0%; }
+    .overlay-tap-hint {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
   </style>
 </head>
 <body>
 <div id="app"></div>
+<div class="runner-overlay" id="runnerOverlay" onclick="closeOverlay()"></div>
 <script>
 // ═══════════════════════════════════════════════════
 // CONFIG — Replace with your deployed Apps Script URL
@@ -436,7 +558,7 @@ const badgeSVG = `<svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns=
 function createCard(r) {
   const yearsDisplay = r.years ? `${r.years} yrs` : '—';
   return `
-  <div class="card">
+  <div class="card" onclick="openRunnerOverlay(${r.leg})">
     <div class="card-top">
       <div class="card-photo-col">
         <img src="${r.photo}" alt="${r.name}" class="card-photo" />
@@ -631,6 +753,67 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(render, 250);
 });
+
+/* ── Fullscreen Runner Overlay ── */
+let overlayTimer = null;
+
+function openRunnerOverlay(leg) {
+  const r = runners.find(run => run.leg === leg);
+  if (!r) return;
+  
+  const overlay = document.getElementById('runnerOverlay');
+  const yearsDisplay = r.years ? r.years + ' yrs' : '—';
+  
+  overlay.innerHTML = `
+    <div class="overlay-card" onclick="event.stopPropagation()">
+      <div class="overlay-leg">Leg ${r.leg}</div>
+      <img src="${r.photo}" alt="${r.name}" class="overlay-photo" />
+      <div class="overlay-name">${r.name}</div>
+      <div class="overlay-badge-row">
+        ${badgeSVG}
+        <span class="badge-years">${yearsDisplay}</span>
+      </div>
+      <div class="overlay-stats">
+        <div class="stat-box">
+          <div class="stat-label">Distance</div>
+          <div class="stat-value">${r.distance || '—'}</div>
+        </div>
+        <div style="flex-shrink:0">
+          <div class="gauge-bar">
+            <div class="gauge-fill" style="height:${r.difficulty * 10}%;background:${gaugeColor(r.difficulty)}"></div>
+          </div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Run Time</div>
+          <div class="stat-value">${r.time || '—'}</div>
+        </div>
+      </div>
+      <div class="overlay-timer">
+        <div class="overlay-timer-bar" id="overlayTimerBar"></div>
+      </div>
+      <div class="overlay-tap-hint">Tap anywhere to close</div>
+    </div>`;
+  
+  overlay.classList.add('visible');
+  
+  // Start countdown bar
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const bar = document.getElementById('overlayTimerBar');
+      if (bar) bar.classList.add('running');
+    });
+  });
+  
+  // Auto-close after 22 seconds
+  if (overlayTimer) clearTimeout(overlayTimer);
+  overlayTimer = setTimeout(closeOverlay, 22000);
+}
+
+function closeOverlay() {
+  if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
+  const overlay = document.getElementById('runnerOverlay');
+  overlay.classList.remove('visible');
+}
 </script>
 </body>
 </html>
