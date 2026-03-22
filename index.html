@@ -520,6 +520,7 @@
       
       /* Active panel — edge to edge on mobile */
       .active-panel {
+        display: flex;
         padding: 0.7rem 12px;
         gap: 10px;
         width: 100%;
@@ -539,11 +540,10 @@
       .active-stats .stat-label { font-size: 0.45rem; }
       .active-hint { font-size: 0.35rem; }
       
-      /* Grid — scrollable for endless feel on mobile */
+      /* Grid — natural scroll on mobile */
       .grid-viewport {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        max-height: 60vh;
+        overflow: visible;
+        max-height: none;
         margin: 0;
         padding: 8px 8px 30px;
       }
@@ -888,23 +888,19 @@ if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
 }
 
 function gaugeColor(d) {
-  // B2V scale: 1=most difficult(red) → 10=moderate(yellow) → 20=least difficult(green)
+  // B2V scale: 1=most difficult → 20=least difficult
+  // Solid banded colors, no gradient
   d = Math.max(1, Math.min(20, d));
-  let r, g, b;
-  if (d <= 10) {
-    // Red to Yellow: 1-10
-    const t = (d - 1) / 9;
-    r = Math.round(239 + t * (250 - 239));   // 239 → 250
-    g = Math.round(0 + t * 204);              // 0 → 204
-    b = Math.round(68 + t * (21 - 68));       // 68 → 21
-  } else {
-    // Yellow to Green: 10-20
-    const t = (d - 10) / 10;
-    r = Math.round(250 + t * (34 - 250));     // 250 → 34
-    g = Math.round(204 + t * (197 - 204));    // 204 → 197
-    b = Math.round(21 + t * (94 - 21));       // 21 → 94
-  }
-  return `rgb(${r},${g},${b})`;
+  if (d <= 2)  return '#D10000';  // Dark red — extreme
+  if (d <= 4)  return '#FF0000';  // Red — very hard
+  if (d <= 6)  return '#FF4400';  // Red-orange — hard
+  if (d <= 8)  return '#FF7700';  // Orange — tough
+  if (d <= 10) return '#FFAA00';  // Amber — moderate-hard
+  if (d <= 12) return '#FFCC00';  // Yellow-amber — moderate
+  if (d <= 14) return '#FFE500';  // Yellow — moderate-easy
+  if (d <= 16) return '#CCDD00';  // Yellow-green — easy-moderate
+  if (d <= 18) return '#66BB00';  // Light green — easy
+  return '#22c55e';               // Green — easiest
 }
 
 /* ── Stopwatch ── */
@@ -1069,29 +1065,8 @@ function initCarousel() {
   const track = document.getElementById('gridTrack');
   if (!track) return;
 
-  /* On mobile (<=600px), enable infinite touch scroll instead of auto-scroll */
+  /* On mobile (<=600px), just let users scroll naturally — no carousel */
   if (window.innerWidth <= 600) {
-    const viewport = track.parentElement;
-    const style = getComputedStyle(document.documentElement);
-    const cols = parseInt(style.getPropertyValue('--grid-cols')) || 2;
-    const cards = track.querySelectorAll('.card');
-    if (!cards.length) return;
-    const gap = parseInt(style.getPropertyValue('--card-gap')) || 10;
-    const rowOffset = cards[0].offsetHeight + gap;
-    const originalRows = Math.ceil(runners.length / cols);
-    const originalHeight = originalRows * rowOffset - gap;
-
-    viewport.addEventListener('scroll', () => {
-      const scrollPos = viewport.scrollTop;
-      /* When scrolled past the original set, jump back seamlessly */
-      if (scrollPos >= originalHeight + gap) {
-        viewport.scrollTop = scrollPos - originalHeight - gap;
-      }
-      /* If somehow scrolled above start, jump forward */
-      if (scrollPos <= 0) {
-        viewport.scrollTop = scrollPos + originalHeight + gap;
-      }
-    });
     return;
   }
 
