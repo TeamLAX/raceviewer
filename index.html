@@ -518,15 +518,16 @@
         width: 100%;
       }
       
-      /* Active panel — compact, scrolls and collapses */
+      /* Active panel — edge to edge on mobile */
       .active-panel {
-        padding: 0.7rem var(--side-margin);
+        padding: 0.7rem 12px;
         gap: 10px;
         width: 100%;
         border-radius: 0;
         border: none;
         border-bottom: 1px solid rgba(255,255,255,0.08);
         background: rgba(255,255,255,0.04);
+        margin: 0;
       }
       .active-panel .active-name { font-size: 1rem; }
       .active-panel .active-leg { font-size: 0.6rem; }
@@ -536,13 +537,15 @@
       }
       .active-stats .stat-value { font-size: 0.55rem; }
       .active-stats .stat-label { font-size: 0.45rem; }
+      .active-hint { font-size: 0.35rem; }
       
-      /* Grid — flat in page scroll, cards fill evenly */
+      /* Grid — scrollable for endless feel on mobile */
       .grid-viewport {
-        overflow: visible;
-        max-height: none;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: 60vh;
         margin: 0;
-        padding: 8px 8px 60px;
+        padding: 8px 8px 30px;
       }
       .grid-track {
         transition: none !important;
@@ -1004,8 +1007,9 @@ function render() {
   const app = document.getElementById('app');
   const allCards = runners.map(createCard).join('');
   const ar = getActiveRunner();
+  const isMobile = window.innerWidth <= 600;
 
-  const gridContent = allCards + allCards;
+  const gridContent = isMobile ? allCards : allCards + allCards;
 
   app.innerHTML = `
     <div class="header">
@@ -1029,7 +1033,7 @@ function render() {
             </div>
             <div class="gauge-wrap">
               <div class="gauge-bar">
-                <div class="gauge-fill" style="height:${a(21 - r.difficulty) * 5}%;background:${gaugeColor(ar.difficulty)}"></div>
+                <div class="gauge-fill" style="height:${(21 - ar.difficulty) * 5}%;background:${gaugeColor(ar.difficulty)}"></div>
               </div>
             </div>
             <div class="stat-box">
@@ -1039,6 +1043,7 @@ function render() {
           </div>
           <div class="active-hint" onclick="openStageDetail(${ar.leg})">tap distance for stage &amp; B2V route details</div>
         </div>
+        <div class="active-photo-col">
           <img src="${ar.photo}" alt="${ar.name}" class="active-photo" />
           <div class="active-badge-row">
             ${makeBadge(ar.years || '')}
