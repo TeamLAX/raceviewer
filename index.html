@@ -253,6 +253,10 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.4; transform: scale(0.7); }
     }
+    @keyframes mapMarkerPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6), 0 2px 6px rgba(0,0,0,0.5); transform: scale(1); }
+      50% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0), 0 2px 6px rgba(0,0,0,0.5); transform: scale(1.1); }
+    }
 
     /* ── Grid carousel area — pinned to bottom ── */
     .grid-viewport {
@@ -796,11 +800,20 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycby_0jGdJiz88dRsSPG9clMu1VZ9VhhJGHmZcHwwBZnJWdeYHp4MgYK1rF49MDmSaX1r/exec';
 const POLL_INTERVAL = 30000; // refresh data every 30 seconds
 const FALLBACK_PHOTO = 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=500&q=80';
+
+// Pre-populated stage distances from B2V race guide
+const STAGE_DISTANCES = {
+  1:'5.4 mi', 2:'4.0 mi', 3:'4.2 mi', 4:'5.1 mi', 5:'6.1 mi',
+  6:'6.1 mi', 7:'6.2 mi', 8:'6.6 mi', 9:'7.5 mi', 10:'5.8 mi',
+  11:'5.3 mi', 12:'4.7 mi', 13:'6.9 mi', 14:'10.7 mi', 15:'6.4 mi',
+  16:'5.8 mi', 17:'8.3 mi', 18:'6.3 mi', 19:'5.6 mi', 20:'3.2 mi'
+};
 // ═══════════════════════════════════════════════════
 
 let runners = Array.from({ length: 20 }, (_, i) => ({
   leg: i + 1, name: `Runner ${i + 1}`, years: '', time: '--:--',
-  distance: '', difficulty: (i % 10) + 1, start: '--:-- PDT',
+  distance: STAGE_DISTANCES[i + 1] || '', difficulty: 5,
+  start: '--:-- PDT',
   photo: FALLBACK_PHOTO, active: i === 0
 }));
 
@@ -823,6 +836,7 @@ function fetchRunners() {
         name: r.name || 'Runner ' + r.leg,
         time: r.time || '--:--',
         start: r.start || '--:-- PDT',
+        distance: r.distance || STAGE_DISTANCES[r.leg] || '',
         difficulty: parseInt(r.difficulty) || 5
       }));
       render();
@@ -1268,59 +1282,89 @@ function openStageDetail(leg) {
       attribution: '© OpenTopoMap'
     }).addTo(stageMap);
     
-    // Draw the FULL route line (all stages)
-    const fullRouteCoords = [];
-    for (let i = 1; i <= 20; i++) {
-      if (stageData[i]) fullRouteCoords.push([stageData[i].lat, stageData[i].lng]);
+    // Fetch road-following route segment by segment via OSRM
+    async function loadRouteSegments() {
+      const allCoords = [];
+      const activeSegCoords = [];
+      
+      for (let i = 1; i < 20; i++) {
+        if (!stageData[i] || !stageData[i + 1]) continue;
+        const from = stageData[i];
+        const to = stageData[i + 1];
+        const url = 'https://router.project-osrm.org/route/v1/driving/' +
+          from.lng + ',' + from.lat + ';' + to.lng + ',' + to.lat +
+          '?overview=full&geometries=geojson';
+        
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.routes && data.routes[0]) {
+            const segCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+            allCoords.push(...segCoords);
+            
+            // Draw each segment
+            const isActiveSeg = (i === leg);
+            if (isActiveSeg) {
+              // Active segment — flashing red
+              const activeLine = L.polyline(segCoords, {
+                color: '#ff3333', weight: 5, opacity: 0.9
+              }).addTo(stageMap);
+              let flashVisible = true;
+              stageFlashInterval = setInterval(() => {
+                flashVisible = !flashVisible;
+                activeLine.setStyle({ opacity: flashVisible ? 0.9 : 0 });
+              }, 1500);
+            } else {
+              // Background route
+              L.polyline(segCoords, {
+                color: '#f59e0b', weight: 3, opacity: 0.3
+              }).addTo(stageMap);
+            }
+          }
+        } catch (e) {
+          // Fallback straight line for this segment
+          L.polyline([[from.lat, from.lng], [to.lat, to.lng]], {
+            color: '#f59e0b', weight: 2, opacity: 0.2, dashArray: '4,6'
+          }).addTo(stageMap);
+        }
+        
+        // Small delay to avoid OSRM rate limits
+        await new Promise(r => setTimeout(r, 200));
+      }
     }
-    L.polyline(fullRouteCoords, {
-      color: '#f59e0b', weight: 3, opacity: 0.35
-    }).addTo(stageMap);
+    loadRouteSegments();
     
-    // Add small markers for ALL stages
+    // Add numbered markers for ALL stages
     for (let i = 1; i <= 20; i++) {
       if (!stageData[i]) continue;
       const s = stageData[i];
       const isCurrentStage = (i === leg);
-      const mColor = i === 1 ? '#22c55e' : i === 20 ? '#ef4444' : (isCurrentStage ? '#f59e0b' : 'rgba(255,255,255,0.25)');
-      const mSize = isCurrentStage ? 32 : 18;
-      const mFont = isCurrentStage ? '13px' : '8px';
-      const mBorder = isCurrentStage ? '3px solid #fff' : '1.5px solid rgba(255,255,255,0.4)';
+      const mColor = i === 1 ? '#22c55e' : i === 20 ? '#ef4444' : (isCurrentStage ? '#f59e0b' : 'rgba(60,40,20,0.85)');
+      const mSize = isCurrentStage ? 34 : 22;
+      const mFont = isCurrentStage ? '14px' : '9px';
+      const mBorder = isCurrentStage ? '3px solid #fff' : '2px solid rgba(255,255,255,0.5)';
       const mColor2 = isCurrentStage ? '#1a0f05' : '#fff';
-      const mShadow = isCurrentStage ? 'box-shadow:0 2px 8px rgba(0,0,0,0.5)' : '';
+      const pulseAnim = isCurrentStage ? 'animation:mapMarkerPulse 1.4s infinite;' : '';
+      const mShadow = 'box-shadow:0 2px 6px rgba(0,0,0,0.5);';
       
       L.marker([s.lat, s.lng], {
         icon: L.divIcon({
           className: '',
-          html: '<div style="background:' + mColor + ';color:' + mColor2 + ';font-family:Gabarito,sans-serif;font-weight:800;font-size:' + mFont + ';width:' + mSize + 'px;height:' + mSize + 'px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:' + mBorder + ';' + mShadow + '">' + i + '</div>',
+          html: '<div style="background:' + mColor + ';color:' + mColor2 + ';font-family:Gabarito,sans-serif;font-weight:800;font-size:' + mFont + ';width:' + mSize + 'px;height:' + mSize + 'px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:' + mBorder + ';' + mShadow + pulseAnim + '">' + i + '</div>',
           iconSize: [mSize, mSize],
           iconAnchor: [mSize/2, mSize/2]
         })
       }).addTo(stageMap);
     }
     
-    // Flashing segment: current stage to next stage
-    let flashLine = null;
+    // Fit map to current stage context
     if (leg < 20 && stageData[leg + 1]) {
       const nextStage = stageData[leg + 1];
-      flashLine = L.polyline(
-        [[stage.lat, stage.lng], [nextStage.lat, nextStage.lng]],
-        { color: '#ff3333', weight: 5, opacity: 0.9 }
-      ).addTo(stageMap);
-      
-      let flashVisible = true;
-      stageFlashInterval = setInterval(() => {
-        flashVisible = !flashVisible;
-        flashLine.setStyle({ opacity: flashVisible ? 0.9 : 0 });
-      }, 1500);
-      
-      // Fit map to show both current and next stage
       stageMap.fitBounds([
         [stage.lat, stage.lng],
         [nextStage.lat, nextStage.lng]
       ], { padding: [60, 60] });
     } else {
-      // Last stage — just center on it
       stageMap.setView([stage.lat, stage.lng], 13);
     }
     
