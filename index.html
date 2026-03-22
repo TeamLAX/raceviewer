@@ -454,77 +454,82 @@
         height: auto;
         min-height: 100vh;
         overflow: visible;
+        display: block;
       }
       
-      /* Title: break after Vegas, no pipe */
+      /* Title: sticky at very top */
       .header {
-        padding: 1rem var(--side-margin) 0.5rem;
+        padding: 0.6rem var(--side-margin) 0.4rem;
         text-align: center;
-      }
-      .header h1 {
-        font-size: 1.5rem;
-      }
-      .header h1 span.pipe { display: none; }
-      .header h1 .title-team { display: block; margin-top: 2px; }
-      .captain { text-align: center; }
-      
-      /* Remove flex spacer on mobile */
-      .flex-spacer { display: none; }
-      
-      /* Center the bottom cards wrap */
-      .bottom-cards-wrap {
-        transform: scale(1);
-        margin: 0 auto;
-        padding: 0 var(--side-margin);
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      /* Stopwatch sticky — scrolls over header, stays on top */
-      .total-time-card {
         position: sticky;
         top: 0;
-        z-index: 20;
+        z-index: 30;
+        background: linear-gradient(135deg, #3b2416 0%, #7a3a12 50%, #2f1b13 100%);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      .header h1 { font-size: 1.3rem; line-height: 1.2; }
+      .header h1 span.pipe { display: none; }
+      .header h1 .title-team { display: block; margin-top: 2px; }
+      .captain { display: none; }
+      
+      /* Hide flex spacer */
+      .flex-spacer { display: none; }
+      
+      /* Remove transform on wrap — breaks sticky */
+      .bottom-cards-wrap {
+        transform: none !important;
+        margin: 0;
+        padding: 0;
         width: 100%;
-        align-self: stretch;
+      }
+      
+      /* Stopwatch sticky below header */
+      .total-time-card {
+        position: sticky;
+        top: 48px;
+        z-index: 20;
         background: rgba(43,28,16,0.97);
         backdrop-filter: blur(10px);
         border-radius: 0;
-        border-left: none;
-        border-right: none;
-        margin-bottom: 5px;
+        border: none;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        margin: 0;
+        padding: 0.5rem var(--side-margin);
+        width: 100%;
       }
       
-      /* Active panel centered and compact — scrolls normally */
+      /* Active panel — compact, scrolls and collapses */
       .active-panel {
-        padding: 0.7rem 1rem;
+        padding: 0.7rem var(--side-margin);
         gap: 10px;
-        width: auto;
-        max-width: 100%;
+        width: 100%;
+        border-radius: 0;
+        border: none;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.04);
       }
       .active-panel .active-name { font-size: 1rem; }
       .active-panel .active-leg { font-size: 0.6rem; }
       .active-photo {
-        width: 55px !important;
-        height: 55px !important;
+        width: 50px !important;
+        height: 50px !important;
       }
       .active-stats .stat-value { font-size: 0.55rem; }
       .active-stats .stat-label { font-size: 0.45rem; }
       
-      /* Grid: part of page scroll, no separate scroll container */
+      /* Grid — flat in page scroll, cards fill evenly */
       .grid-viewport {
         overflow: visible;
         max-height: none;
-        flex: none;
-        margin-bottom: 30px;
-        padding: 10px var(--side-margin) 30px;
+        margin: 0;
+        padding: 8px 8px 60px;
       }
       .grid-track {
         transition: none !important;
         transform: none !important;
-        justify-items: center;
+      }
+      .card {
+        width: 100%;
       }
     }
     /* ── Fullscreen Runner Overlay ── */
