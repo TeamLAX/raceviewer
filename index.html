@@ -1216,10 +1216,15 @@ const stageData = [
 
 /* ── Stage Detail Overlay ── */
 let stageMap = null;
+let stageFlashInterval = null;
+let stageDetailTimer = null;
 
 function openStageDetail(leg) {
   const stage = stageData[leg];
   if (!stage) return;
+  
+  // Clear any existing auto-close timer
+  if (stageDetailTimer) { clearTimeout(stageDetailTimer); stageDetailTimer = null; }
   
   const overlay = document.getElementById('stageOverlay');
   document.getElementById('stageOverlayTitle').textContent = 'Stage ' + leg + (leg === 1 ? ' — Start' : leg === 20 ? ' — Finish' : '');
@@ -1250,6 +1255,7 @@ function openStageDetail(leg) {
       stageMap.remove();
       stageMap = null;
     }
+    if (stageFlashInterval) { clearInterval(stageFlashInterval); stageFlashInterval = null; }
     
     stageMap = L.map('stageMap', {
       center: [stage.lat, stage.lng],
@@ -1262,53 +1268,73 @@ function openStageDetail(leg) {
       attribution: '© OpenTopoMap'
     }).addTo(stageMap);
     
-    // Stage marker
-    const markerColor = leg === 1 ? '#22c55e' : leg === 20 ? '#ef4444' : '#f59e0b';
-    L.marker([stage.lat, stage.lng], {
-      icon: L.divIcon({
-        className: '',
-        html: '<div style="background:' + markerColor + ';color:#1a0f05;font-family:Gabarito,sans-serif;font-weight:800;font-size:13px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)">' + leg + '</div>',
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
-      })
+    // Draw the FULL route line (all stages)
+    const fullRouteCoords = [];
+    for (let i = 1; i <= 20; i++) {
+      if (stageData[i]) fullRouteCoords.push([stageData[i].lat, stageData[i].lng]);
+    }
+    L.polyline(fullRouteCoords, {
+      color: '#f59e0b', weight: 3, opacity: 0.35
     }).addTo(stageMap);
     
-    // If not first or last stage, show connecting route to next/prev
-    if (leg > 1 && stageData[leg - 1]) {
-      const prev = stageData[leg - 1];
-      L.polyline([[prev.lat, prev.lng], [stage.lat, stage.lng]], {
-        color: '#f59e0b', weight: 3, opacity: 0.5, dashArray: '8,8'
-      }).addTo(stageMap);
-      L.marker([prev.lat, prev.lng], {
+    // Add small markers for ALL stages
+    for (let i = 1; i <= 20; i++) {
+      if (!stageData[i]) continue;
+      const s = stageData[i];
+      const isCurrentStage = (i === leg);
+      const mColor = i === 1 ? '#22c55e' : i === 20 ? '#ef4444' : (isCurrentStage ? '#f59e0b' : 'rgba(255,255,255,0.25)');
+      const mSize = isCurrentStage ? 32 : 18;
+      const mFont = isCurrentStage ? '13px' : '8px';
+      const mBorder = isCurrentStage ? '3px solid #fff' : '1.5px solid rgba(255,255,255,0.4)';
+      const mColor2 = isCurrentStage ? '#1a0f05' : '#fff';
+      const mShadow = isCurrentStage ? 'box-shadow:0 2px 8px rgba(0,0,0,0.5)' : '';
+      
+      L.marker([s.lat, s.lng], {
         icon: L.divIcon({
           className: '',
-          html: '<div style="background:rgba(255,255,255,0.2);color:#fff;font-family:Gabarito,sans-serif;font-weight:700;font-size:10px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,0.4)">' + (leg-1) + '</div>',
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
+          html: '<div style="background:' + mColor + ';color:' + mColor2 + ';font-family:Gabarito,sans-serif;font-weight:800;font-size:' + mFont + ';width:' + mSize + 'px;height:' + mSize + 'px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:' + mBorder + ';' + mShadow + '">' + i + '</div>',
+          iconSize: [mSize, mSize],
+          iconAnchor: [mSize/2, mSize/2]
         })
       }).addTo(stageMap);
     }
+    
+    // Flashing segment: current stage to next stage
+    let flashLine = null;
     if (leg < 20 && stageData[leg + 1]) {
-      const next = stageData[leg + 1];
-      L.polyline([[stage.lat, stage.lng], [next.lat, next.lng]], {
-        color: '#f59e0b', weight: 3, opacity: 0.5, dashArray: '8,8'
-      }).addTo(stageMap);
-      L.marker([next.lat, next.lng], {
-        icon: L.divIcon({
-          className: '',
-          html: '<div style="background:rgba(255,255,255,0.2);color:#fff;font-family:Gabarito,sans-serif;font-weight:700;font-size:10px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,0.4)">' + (leg+1) + '</div>',
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
-        })
-      }).addTo(stageMap);
+      const nextStage = stageData[leg + 1];
+      flashLine = L.polyline(
+        [[stage.lat, stage.lng], [nextStage.lat, nextStage.lng]],
+        { color: '#ff3333', weight: 5, opacity: 0.9 }
+      ).addTo(stageMap);
+      
+      let flashVisible = true;
+      stageFlashInterval = setInterval(() => {
+        flashVisible = !flashVisible;
+        flashLine.setStyle({ opacity: flashVisible ? 0.9 : 0 });
+      }, 1500);
+      
+      // Fit map to show both current and next stage
+      stageMap.fitBounds([
+        [stage.lat, stage.lng],
+        [nextStage.lat, nextStage.lng]
+      ], { padding: [60, 60] });
+    } else {
+      // Last stage — just center on it
+      stageMap.setView([stage.lat, stage.lng], 13);
     }
     
     stageMap.invalidateSize();
   }, 100);
+  
+  // Auto-close after 1 min 30 sec (90 seconds)
+  stageDetailTimer = setTimeout(closeStageDetail, 90000);
 }
 
 function closeStageDetail() {
+  if (stageDetailTimer) { clearTimeout(stageDetailTimer); stageDetailTimer = null; }
   document.getElementById('stageOverlay').classList.remove('visible');
+  if (stageFlashInterval) { clearInterval(stageFlashInterval); stageFlashInterval = null; }
   if (stageMap) {
     stageMap.remove();
     stageMap = null;
