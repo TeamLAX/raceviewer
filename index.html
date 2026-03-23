@@ -966,6 +966,19 @@ function fetchRunners() {
         distance: r.distance || STAGE_DISTANCES[r.leg] || '',
         difficulty: parseInt(r.difficulty) || STAGE_DIFFICULTY[r.leg] || 10
       }));
+      
+      // Read clock state from API
+      if (data.clock) {
+        const c = data.clock;
+        clockStatus = c.status || 'running';
+        clockAdvisory = c.advisory || '';
+        clockStoppedAt = c.stoppedAt || '';
+        clockConfirmedTime = c.confirmedTime || '';
+        if (c.autoStartTime) {
+          stopwatchStart = new Date(c.autoStartTime).getTime();
+        }
+      }
+      
       render();
     }
   };
@@ -1000,28 +1013,60 @@ function gaugeColor(d) {
 /* ── Stopwatch ── */
 let stopwatchInterval = null;
 let stopwatchStart = null;
+let clockStatus = 'running';   // running, stopped, confirmed
+let clockConfirmedTime = '';
+let clockStoppedAt = '';
+let clockAdvisory = '';
 
 function startStopwatch() {
   if (stopwatchInterval) clearInterval(stopwatchInterval);
   
-  // Race start: March 22, 2026 12:00:00 PDT (UTC-7)
-  stopwatchStart = new Date('2026-03-22T12:00:00-07:00').getTime();
+  // Default race start — will be overridden by API clock data
+  if (!stopwatchStart) {
+    stopwatchStart = new Date('2026-03-28T08:00:00-07:00').getTime();
+  }
   
   const el = document.getElementById('totalTime');
   if (!el) return;
   
   el.innerHTML = `
     <div class="total-label">Stop Watch</div>
-    <div class="total-value" id="stopwatchDisplay">00:00:00.00</div>`;
+    <div class="total-value" id="stopwatchDisplay">00:00:00.00</div>
+    <div id="clockAdvisoryDisplay" style="font-size:0.55rem;color:#ef4444;text-align:center;margin-top:2px;font-weight:700;letter-spacing:0.05em;display:none"></div>`;
   
   function updateStopwatch() {
+    const displayEl = document.getElementById('stopwatchDisplay');
+    const advisoryEl = document.getElementById('clockAdvisoryDisplay');
+    if (!displayEl) return;
+    
+    // If confirmed, show confirmed time
+    if (clockStatus === 'confirmed' && clockConfirmedTime) {
+      displayEl.textContent = clockConfirmedTime;
+      displayEl.style.color = '#f59e0b';
+      if (advisoryEl) { advisoryEl.style.display = 'none'; }
+      return;
+    }
+    
+    // If stopped, show stopped time + advisory
+    if (clockStatus === 'stopped' && clockStoppedAt) {
+      displayEl.textContent = clockStoppedAt;
+      displayEl.style.color = '#ef4444';
+      if (advisoryEl && clockAdvisory) {
+        advisoryEl.textContent = clockAdvisory;
+        advisoryEl.style.display = 'block';
+      }
+      return;
+    }
+    
+    // Running — count up
+    if (advisoryEl) { advisoryEl.style.display = 'none'; }
+    displayEl.style.color = '';
+    
     const now = Date.now();
     const elapsed = now - stopwatchStart;
     
-    // If race hasn't started yet, show zeros
     if (elapsed <= 0) {
-      const displayEl = document.getElementById('stopwatchDisplay');
-      if (displayEl) displayEl.textContent = '00:00:00.00';
+      displayEl.textContent = '00:00:00.00';
       return;
     }
     
@@ -1035,8 +1080,7 @@ function startStopwatch() {
                     String(secs).padStart(2, '0') + '.' +
                     String(hundredths).padStart(2, '0');
     
-    const displayEl = document.getElementById('stopwatchDisplay');
-    if (displayEl) displayEl.textContent = display;
+    displayEl.textContent = display;
   }
   
   updateStopwatch();
