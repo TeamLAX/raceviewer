@@ -643,10 +643,13 @@
       stroke-linecap: round;
       stroke-dasharray: 113;
       stroke-dashoffset: 0;
-      transition: stroke-dashoffset 90s linear;
     }
     .stage-overlay-close .ring-countdown.running {
-      stroke-dashoffset: 113;
+      animation: ringDrain90 90s linear forwards;
+    }
+    @keyframes ringDrain90 {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: 113; }
     }
     .stage-map-container {
       flex: 1;
@@ -870,10 +873,13 @@
       stroke-linecap: round;
       stroke-dasharray: 100.5;
       stroke-dashoffset: 0;
-      transition: stroke-dashoffset 22s linear;
     }
     .overlay-close-btn .ring-countdown.running {
-      stroke-dashoffset: 100.5;
+      animation: ringDrain22 22s linear forwards;
+    }
+    @keyframes ringDrain22 {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: 100.5; }
     }
   </style>
 </head>
@@ -1302,7 +1308,7 @@ function openRunnerOverlay(leg) {
   
   overlay.innerHTML = `
     <div class="overlay-card" onclick="event.stopPropagation()">
-      <button class="overlay-close-btn" onclick="closeOverlay()">
+      <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
         <svg viewBox="0 0 36 36">
           <circle class="ring-bg" cx="18" cy="18" r="16" />
           <circle class="ring-countdown" id="overlayCountdownRing" cx="18" cy="18" r="16" />
@@ -1369,6 +1375,8 @@ function openRunnerOverlay(leg) {
 
 function closeOverlay() {
   if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
+  const ring = document.getElementById('overlayCountdownRing');
+  if (ring) ring.classList.remove('running');
   const overlay = document.getElementById('runnerOverlay');
   overlay.classList.remove('visible');
 }
