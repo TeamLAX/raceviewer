@@ -518,27 +518,40 @@
         width: 100%;
       }
       
-      /* Active panel — edge to edge on mobile */
+      /* Active panel — prominent full-width card on mobile */
       .active-panel {
         display: flex;
-        padding: 0.7rem 12px;
-        gap: 10px;
+        padding: 14px 16px;
+        gap: 12px;
         width: 100%;
         border-radius: 0;
         border: none;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.04);
+        background: linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(255,255,255,0.06) 100%);
+        border-top: 2px solid rgba(245,158,11,0.3);
+        border-bottom: 2px solid rgba(245,158,11,0.3);
         margin: 0;
+        align-items: stretch;
       }
-      .active-panel .active-name { font-size: 1rem; }
-      .active-panel .active-leg { font-size: 0.6rem; }
+      .active-panel .active-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .active-panel .label { font-size: 0.65rem; }
+      .active-panel .active-name { font-size: 1.15rem; }
+      .active-panel .active-leg { font-size: 0.65rem; }
+      .active-photo-col {
+        flex-shrink: 0;
+      }
       .active-photo {
-        width: 50px !important;
-        height: 50px !important;
+        width: 65px !important;
+        height: 65px !important;
       }
-      .active-stats .stat-value { font-size: 0.55rem; }
+      .active-stats {
+        margin-top: 6px;
+      }
+      .active-stats .stat-value { font-size: 0.65rem; padding: 3px 6px; }
       .active-stats .stat-label { font-size: 0.45rem; }
-      .active-hint { font-size: 0.35rem; }
+      .active-hint { font-size: 0.4rem; margin-top: 5px; }
       
       /* Grid — natural scroll on mobile */
       .grid-viewport {
@@ -889,18 +902,12 @@ if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
 
 function gaugeColor(d) {
   // B2V scale: 1=most difficult → 20=least difficult
-  // Solid banded colors, no gradient
+  // 4 solid colors only
   d = Math.max(1, Math.min(20, d));
-  if (d <= 2)  return '#D10000';  // Dark red — extreme
-  if (d <= 4)  return '#FF0000';  // Red — very hard
-  if (d <= 6)  return '#FF4400';  // Red-orange — hard
-  if (d <= 8)  return '#FF7700';  // Orange — tough
-  if (d <= 10) return '#FFAA00';  // Amber — moderate-hard
-  if (d <= 12) return '#FFCC00';  // Yellow-amber — moderate
-  if (d <= 14) return '#FFE500';  // Yellow — moderate-easy
-  if (d <= 16) return '#CCDD00';  // Yellow-green — easy-moderate
-  if (d <= 18) return '#66BB00';  // Light green — easy
-  return '#22c55e';               // Green — easiest
+  if (d <= 2)  return '#D10000';  // Dark red
+  if (d <= 9)  return '#FF0000';  // Red
+  if (d <= 16) return '#FACC15';  // Yellow
+  return '#22c55e';               // Green (17-20)
 }
 
 /* ── Stopwatch ── */
@@ -1186,7 +1193,7 @@ function openRunnerOverlay(leg) {
         </div>
         <div class="overlay-stat">
           <div class="stat-label">Difficulty</div>
-          <div class="stat-value">${r.difficulty}/20</div>
+          <div class="stat-value">${r.difficulty}</div>
           <div class="overlay-diff-label">${diffLabel}</div>
         </div>
         <div class="overlay-stat">
