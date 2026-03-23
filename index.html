@@ -609,10 +609,44 @@
     .stage-overlay-close {
       background: none;
       border: none;
-      color: rgba(255,255,255,0.5);
-      font-size: 1.5rem;
       cursor: pointer;
-      padding: 4px 8px;
+      padding: 0;
+      position: relative;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stage-overlay-close .close-x {
+      color: rgba(255,255,255,0.7);
+      font-size: 1.1rem;
+      position: relative;
+      z-index: 1;
+    }
+    .stage-overlay-close svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 40px;
+      height: 40px;
+      transform: rotate(-90deg);
+    }
+    .stage-overlay-close .ring-bg {
+      fill: none;
+      stroke: rgba(255,255,255,0.1);
+      stroke-width: 3;
+    }
+    .stage-overlay-close .ring-countdown {
+      fill: none;
+      stroke: #f59e0b;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 113;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 90s linear;
+    }
+    .stage-overlay-close .ring-countdown.running {
+      stroke-dashoffset: 113;
     }
     .stage-map-container {
       flex: 1;
@@ -802,7 +836,13 @@
 <div class="stage-overlay" id="stageOverlay">
   <div class="stage-overlay-header">
     <h2 id="stageOverlayTitle">Stage</h2>
-    <button class="stage-overlay-close" onclick="closeStageDetail()">✕</button>
+    <button class="stage-overlay-close" onclick="closeStageDetail()">
+      <svg viewBox="0 0 40 40">
+        <circle class="ring-bg" cx="20" cy="20" r="18" />
+        <circle class="ring-countdown" id="countdownRing" cx="20" cy="20" r="18" />
+      </svg>
+      <span class="close-x">✕</span>
+    </button>
   </div>
   <div class="stage-map-container">
     <div id="stageMap"></div>
@@ -1294,6 +1334,16 @@ function openStageDetail(leg) {
   
   overlay.classList.add('visible');
   
+  // Start circular countdown ring
+  const ring = document.getElementById('countdownRing');
+  if (ring) {
+    ring.classList.remove('running');
+    void ring.offsetWidth;
+    requestAnimationFrame(() => {
+      ring.classList.add('running');
+    });
+  }
+  
   // Initialize or update the map after overlay is visible
   setTimeout(() => {
     if (stageMap) {
@@ -1409,6 +1459,8 @@ function openStageDetail(leg) {
 function closeStageDetail() {
   if (stageDetailTimer) { clearTimeout(stageDetailTimer); stageDetailTimer = null; }
   document.getElementById('stageOverlay').classList.remove('visible');
+  const ring = document.getElementById('countdownRing');
+  if (ring) ring.classList.remove('running');
   if (stageFlashInterval) { clearInterval(stageFlashInterval); stageFlashInterval = null; }
   if (stageMap) {
     stageMap.remove();
