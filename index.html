@@ -1516,7 +1516,18 @@ function openStageDetail(leg) {
   if (stageDetailTimer) { clearTimeout(stageDetailTimer); stageDetailTimer = null; }
   
   const overlay = document.getElementById('stageOverlay');
-  document.getElementById('stageOverlayTitle').textContent = 'Stage ' + leg + (leg === 1 ? ' — Start' : leg === 20 ? ' — Finish' : '');
+  
+  // Get the runner for this stage
+  const stageRunner = runners.find(r => r.leg === leg) || {};
+  const firstName = (stageRunner.name || 'Runner').split(' ')[0];
+  const runnerPhoto = stageRunner.photo || FALLBACK_PHOTO;
+  
+  document.getElementById('stageOverlayTitle').innerHTML = 
+    '<div style="display:flex;align-items:center;gap:10px">' +
+    '<span>Stage ' + leg + '</span>' +
+    '<img src="' + runnerPhoto + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.4)" />' +
+    '<span style="font-size:0.85rem;color:rgba(255,255,255,0.8);font-weight:400">' + firstName + '\'s Run Leg Details</span>' +
+    '</div>';
   
   document.getElementById('stageInfoBar').innerHTML = `
     <div class="stage-info-grid">
@@ -1569,8 +1580,6 @@ function openStageDetail(leg) {
     
     // Fetch road-following route segment by segment via OSRM
     async function loadRouteSegments() {
-      const allCoords = [];
-      const activeSegCoords = [];
       
       for (let i = 1; i < 20; i++) {
         if (!stageData[i] || !stageData[i + 1]) continue;
@@ -1585,9 +1594,7 @@ function openStageDetail(leg) {
           const data = await res.json();
           if (data.routes && data.routes[0]) {
             const segCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-            allCoords.push(...segCoords);
             
-            // Draw each segment
             const isActiveSeg = (i === leg);
             if (isActiveSeg) {
               // Active segment — flashing red
@@ -1600,9 +1607,9 @@ function openStageDetail(leg) {
                 activeLine.setStyle({ opacity: flashVisible ? 0.9 : 0 });
               }, 1500);
             } else {
-              // Background route
+              // Non-active — solid gold route line
               L.polyline(segCoords, {
-                color: '#f59e0b', weight: 3, opacity: 0.3
+                color: '#f59e0b', weight: 3, opacity: 0.5
               }).addTo(stageMap);
             }
           }
