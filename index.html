@@ -1064,28 +1064,51 @@ function startStopwatch() {
   el.innerHTML = `
     <div class="total-label">Stop Watch</div>
     <div class="total-value" id="stopwatchDisplay">00:00:00.00</div>
-    <div id="clockDebug" style="font-size:0.5rem;color:rgba(255,255,255,0.3);text-align:center;margin-top:2px"></div>`;
+    <div id="clockUnofficialBanner" style="display:none;font-family:Gabarito,sans-serif;font-size:1rem;font-weight:900;color:#ef4444;text-align:center;margin-top:4px;letter-spacing:0.15em;text-transform:uppercase"></div>`;
+  
+  var flashToggle = true;
   
   stopwatchInterval = setInterval(function() {
     var displayEl = document.getElementById('stopwatchDisplay');
+    var bannerEl = document.getElementById('clockUnofficialBanner');
     if (!displayEl) return;
     
-    // Confirmed — show frozen confirmed time
+    // Confirmed — show final time in gold, hide banner
     if (clockStatus === 'confirmed' && clockConfirmedTime) {
       displayEl.textContent = clockConfirmedTime;
       displayEl.style.color = '#f59e0b';
+      if (bannerEl) bannerEl.style.display = 'none';
       return;
     }
     
-    // Stopped with a time — show frozen stopped time in red
-    if (clockStatus === 'stopped' && clockStoppedAt) {
-      displayEl.textContent = clockStoppedAt;
+    // Stopped — freeze the time, flash UNOFFICIAL
+    if (clockStatus === 'stopped') {
+      // Calculate frozen time from start
+      var frozenElapsed = Date.now() - stopwatchStart;
+      if (clockStoppedAt) {
+        displayEl.textContent = clockStoppedAt;
+      } else if (frozenElapsed > 0) {
+        // Use calculated elapsed if no stoppedAt value
+        var fh = Math.floor(frozenElapsed / 3600000);
+        var fm = Math.floor((frozenElapsed % 3600000) / 60000);
+        var fs = Math.floor((frozenElapsed % 60000) / 1000);
+        displayEl.textContent = String(fh).padStart(2,'0') + ':' + String(fm).padStart(2,'0') + ':' + String(fs).padStart(2,'0');
+      }
       displayEl.style.color = '#ef4444';
+      
+      // Flash UNOFFICIAL
+      if (bannerEl) {
+        bannerEl.style.display = 'block';
+        flashToggle = !flashToggle;
+        bannerEl.textContent = 'UNOFFICIAL';
+        bannerEl.style.opacity = flashToggle ? '1' : '0';
+      }
       return;
     }
     
-    // Running or waiting — count up from stopwatchStart
+    // Running — count up, hide banner
     displayEl.style.color = '';
+    if (bannerEl) bannerEl.style.display = 'none';
     var elapsed = Date.now() - stopwatchStart;
     if (elapsed <= 0) {
       displayEl.textContent = '00:00:00.00';
