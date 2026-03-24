@@ -1049,20 +1049,27 @@ function startStopwatch() {
       return;
     }
     
-    // If stopped, show stopped time + advisory
-    if (clockStatus === 'stopped' && clockStoppedAt) {
-      displayEl.textContent = clockStoppedAt;
-      displayEl.style.color = '#ef4444';
+    // If stopped, show stopped time or zeros
+    if (clockStatus === 'stopped') {
+      displayEl.textContent = clockStoppedAt || '00:00:00.00';
+      displayEl.style.color = clockStoppedAt ? '#ef4444' : '';
       if (advisoryEl && clockAdvisory) {
         advisoryEl.textContent = clockAdvisory;
         advisoryEl.style.display = 'block';
+      } else if (advisoryEl) {
+        advisoryEl.style.display = 'none';
       }
       return;
     }
     
-    // Running — count up
+    // Running — count up from autoStartTime
     if (advisoryEl) { advisoryEl.style.display = 'none'; }
     displayEl.style.color = '';
+    
+    if (!stopwatchStart) {
+      displayEl.textContent = '00:00:00.00';
+      return;
+    }
     
     const now = Date.now();
     const elapsed = now - stopwatchStart;
