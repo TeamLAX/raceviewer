@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" async></script>
   <style>
     :root {
       --side-margin: 2.5rem;
@@ -1045,8 +1045,12 @@ function gaugeColor(d) {
 
 /* ── Stopwatch ── */
 let stopwatchInterval = null;
-let stopwatchStart = new Date('2026-03-28T08:00:00-07:00').getTime();
-let clockStatus = 'running';   // running, stopped, confirmed
+
+// Check URL parameter first: ?start=2026-03-28T08:00:00-07:00
+const urlParams = new URLSearchParams(window.location.search);
+const urlStart = urlParams.get('start');
+let stopwatchStart = urlStart ? new Date(urlStart).getTime() : new Date('2026-03-28T08:00:00-07:00').getTime();
+let clockStatus = urlStart ? 'running' : 'running';
 let clockConfirmedTime = '';
 let clockStoppedAt = '';
 let clockAdvisory = '';
@@ -1442,6 +1446,7 @@ let stageFlashInterval = null;
 let stageDetailTimer = null;
 
 function openStageDetail(leg) {
+  if (typeof L === 'undefined') { alert('Map is still loading, try again in a moment.'); return; }
   const stage = stageData[leg];
   if (!stage) return;
   
@@ -1606,10 +1611,15 @@ function closeStageDetail() {
 }
 
 // ── Initialize ──
-render();
-if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
-  fetchRunners();
-  setInterval(fetchRunners, POLL_INTERVAL);
+try {
+  render();
+  if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
+    fetchRunners();
+    setInterval(fetchRunners, POLL_INTERVAL);
+  }
+} catch(e) {
+  console.error('B2V Init Error:', e);
+  document.body.innerHTML = '<div style="color:red;padding:20px;font-family:monospace">Init Error: ' + e.message + '</div>';
 }
 </script>
 </body>
