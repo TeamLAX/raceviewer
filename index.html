@@ -1096,12 +1096,12 @@ function startStopwatch() {
       }
       displayEl.style.color = '#ef4444';
       
-      // Flash UNOFFICIAL
+      // Flash UNOFFICIAL — 2 sec on, 300ms off
       if (bannerEl) {
         bannerEl.style.display = 'block';
-        flashToggle = !flashToggle;
         bannerEl.textContent = 'UNOFFICIAL';
-        bannerEl.style.opacity = flashToggle ? '1' : '0';
+        var cycle = Date.now() % 2300;
+        bannerEl.style.opacity = cycle < 2000 ? '1' : '0';
       }
       return;
     }
