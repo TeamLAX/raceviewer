@@ -1000,11 +1000,7 @@ function fetchRunners() {
   document.head.appendChild(script);
 }
 
-// Initial load + polling
-if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
-  fetchRunners();
-  setInterval(fetchRunners, POLL_INTERVAL);
-}
+// Load and polling setup moved to end of script
 
 function gaugeColor(d) {
   // B2V scale: 1=most difficult → 20=least difficult
@@ -1573,6 +1569,13 @@ function closeStageDetail() {
     stageMap.remove();
     stageMap = null;
   }
+}
+
+// ── Initialize ──
+render();
+if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
+  fetchRunners();
+  setInterval(fetchRunners, POLL_INTERVAL);
 }
 </script>
 </body>
