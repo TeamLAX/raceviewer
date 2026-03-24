@@ -973,7 +973,7 @@ function fetchRunners() {
     }
     
     if (data && data.status === 'ok' && data.runners && data.runners.length) {
-      runners = data.runners.map(r => ({
+      var newRunners = data.runners.map(r => ({
         ...r,
         photo: r.photo || FALLBACK_PHOTO,
         name: r.name || 'Runner ' + r.leg,
@@ -999,7 +999,13 @@ function fetchRunners() {
         clockStatus = 'running';
       }
       
-      render();
+      // Only do full render if data actually changed (avoid destroying carousel)
+      var runnersChanged = JSON.stringify(newRunners) !== JSON.stringify(runners);
+      runners = newRunners;
+      
+      if (runnersChanged || !document.getElementById('gridTrack')) {
+        render();
+      }
     }
   };
   
@@ -1237,7 +1243,8 @@ function render() {
     /* Start live stopwatch */
     startStopwatch();
 
-    initCarousel();
+    // Delay carousel init slightly to ensure cards have rendered sizes
+    setTimeout(initCarousel, 100);
   });
 }
 
@@ -1349,6 +1356,7 @@ function initCarousel() {
       return;
     }
 
+    track.style.transition = 'transform 0.9s cubic-bezier(0.4, 0, 0.2, 1)';
     track.style.transform = `translateY(-${currentTopRow * rowOffset}px)`;
   }, INTERVAL_MS);
 }
