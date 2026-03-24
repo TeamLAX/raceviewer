@@ -962,6 +962,13 @@ function fetchRunners() {
     const script = document.getElementById(cbName);
     if (script) script.remove();
     
+    // DEBUG: show what clock data we received
+    if (data && data.clock) {
+      console.log('B2V Clock data:', JSON.stringify(data.clock));
+      var dbg = document.getElementById('clockDebug');
+      if (dbg) dbg.textContent = 'API clock: status=' + (data.clock.status||'?') + ' autoStartTime=' + (data.clock.autoStartTime||'none');
+    }
+    
     if (data && data.status === 'ok' && data.runners && data.runners.length) {
       runners = data.runners.map(r => ({
         ...r,
@@ -1004,7 +1011,9 @@ function fetchRunners() {
   script.onerror = function() {
     delete window[cbName];
     script.remove();
-    console.log('JSONP load failed, using cached data');
+    console.log('JSONP load failed');
+    var dbg = document.getElementById('clockDebug');
+    if (dbg) dbg.textContent = 'API call failed — using local data';
   };
   document.head.appendChild(script);
 }
@@ -1038,6 +1047,7 @@ function startStopwatch() {
   el.innerHTML = `
     <div class="total-label">Stop Watch</div>
     <div class="total-value" id="stopwatchDisplay">00:00:00.00</div>
+    <div id="clockDebug" style="font-size:0.5rem;color:rgba(255,255,255,0.3);text-align:center;margin-top:2px"></div>
     <div id="clockAdvisoryDisplay" style="font-size:0.55rem;color:#ef4444;text-align:center;margin-top:2px;font-weight:700;letter-spacing:0.05em;display:none"></div>`;
   
   function updateStopwatch() {
