@@ -1256,6 +1256,7 @@ function initCarousel() {
   const originalRowCount = Math.ceil(totalRunners / cols);
   const VISIBLE_ROWS = 2;
   const INTERVAL_MS = 20000;
+  const PAUSE_AFTER_INTERACTION = 20000;
 
   if (originalRowCount <= VISIBLE_ROWS) return;
 
@@ -1268,10 +1269,30 @@ function initCarousel() {
   /* Lock viewport to exactly 2 rows */
   const viewport = track.parentElement;
   viewport.style.height = (rowOffset * VISIBLE_ROWS - gap) + 'px';
+  viewport.style.overflow = 'hidden';
 
   let currentTopRow = 0;
+  let userInteracted = false;
+  let interactionTimer = null;
+
+  function onUserInteraction() {
+    userInteracted = true;
+    if (interactionTimer) clearTimeout(interactionTimer);
+    interactionTimer = setTimeout(function() {
+      userInteracted = false;
+    }, PAUSE_AFTER_INTERACTION);
+  }
+
+  // Listen for mouse wheel and touch on the viewport
+  viewport.addEventListener('wheel', onUserInteraction);
+  viewport.addEventListener('touchstart', onUserInteraction);
+  viewport.addEventListener('touchmove', onUserInteraction);
+  viewport.addEventListener('mousedown', onUserInteraction);
 
   carouselTimer = setInterval(() => {
+    // Skip auto-scroll if user recently interacted
+    if (userInteracted) return;
+
     currentTopRow++;
 
     /* When we've scrolled past all original rows, seamlessly jump back */
