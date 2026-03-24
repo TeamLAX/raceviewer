@@ -957,7 +957,10 @@ function getActiveRunner() {
 function fetchRunners() {
   // Use JSONP to bypass CORS — injects a script tag
   const cbName = '_b2v_cb_' + Date.now();
+  let handled = false;
+  
   window[cbName] = function(data) {
+    handled = true;
     delete window[cbName];
     const script = document.getElementById(cbName);
     if (script) script.remove();
@@ -966,7 +969,7 @@ function fetchRunners() {
     if (data && data.clock) {
       console.log('B2V Clock data:', JSON.stringify(data.clock));
       var dbg = document.getElementById('clockDebug');
-      if (dbg) dbg.textContent = 'API clock: status=' + (data.clock.status||'?') + ' autoStartTime=' + (data.clock.autoStartTime||'none');
+      if (dbg) dbg.textContent = 'API: status=' + (data.clock.status||'?') + ' start=' + (data.clock.autoStartTime||'none');
     }
     
     if (data && data.status === 'ok' && data.runners && data.runners.length) {
@@ -991,12 +994,7 @@ function fetchRunners() {
           stopwatchStart = new Date(c.autoStartTime).getTime();
         }
       }
-      // If no clock data from API, still count from autoStartTime
-      // The viewer always runs — it shows zeros until start time arrives
-      if (!stopwatchStart) {
-        stopwatchStart = new Date('2026-03-28T08:00:00-07:00').getTime();
-      }
-      // If status is stopped but has no stoppedAt, treat as running (admin POST may not have synced)
+      // If status is stopped but has no stoppedAt, treat as running
       if (clockStatus === 'stopped' && !clockStoppedAt) {
         clockStatus = 'running';
       }
@@ -1009,13 +1007,28 @@ function fetchRunners() {
   script.id = cbName;
   script.src = API_URL + '?callback=' + cbName + '&t=' + Date.now();
   script.onerror = function() {
+    if (handled) return;
+    handled = true;
     delete window[cbName];
     script.remove();
     console.log('JSONP load failed');
     var dbg = document.getElementById('clockDebug');
-    if (dbg) dbg.textContent = 'API call failed — using local data';
+    if (dbg) dbg.textContent = 'API call failed — check deployment URL';
   };
   document.head.appendChild(script);
+  
+  // Timeout fallback — if no response in 8 seconds
+  setTimeout(function() {
+    if (!handled) {
+      handled = true;
+      delete window[cbName];
+      var s = document.getElementById(cbName);
+      if (s) s.remove();
+      console.log('JSONP timeout');
+      var dbg = document.getElementById('clockDebug');
+      if (dbg) dbg.textContent = 'API timeout — check URL & deployment';
+    }
+  }, 8000);
 }
 
 // Load and polling setup moved to end of script
