@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B2V Stopwatch Test</title>
+<style>
+body { background: #1a1108; color: #fff; font-family: sans-serif; padding: 20px; }
+#log { font-family: monospace; font-size: 14px; line-height: 1.8; white-space: pre-wrap; }
+.ok { color: #22c55e; }
+.err { color: #ef4444; }
+.warn { color: #f59e0b; }
+#clock { font-size: 3rem; font-weight: bold; color: #f59e0b; margin: 20px 0; }
+</style>
+</head>
+<body>
+<h2>B2V Stopwatch Diagnostic</h2>
+<div id="clock">00:00:00.00</div>
+<div id="log"></div>
+
+<script>
+var API_URL = 'https://script.google.com/macros/s/AKfycbwXVz6imVR8K76L2hfAOiUApcbB0D1pkTrR8rDtJCRmS3e7xk6HvbgIAzHe0JP34uJ6/exec';
+var logEl = document.getElementById('log');
+var clockEl = document.getElementById('clock');
+
+function log(msg, cls) {
+  var div = document.createElement('div');
+  div.className = cls || '';
+  div.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+  logEl.appendChild(div);
+}
+
+// Test 1: Does basic JS work?
+log('✓ JavaScript is running', 'ok');
+
+// Test 2: Try URL parameter
+var params = new URLSearchParams(window.location.search);
+var urlStart = params.get('start');
+if (urlStart) {
+  log('✓ URL start parameter found: ' + urlStart, 'ok');
+} else {
+  log('No ?start= URL parameter — will try API', 'warn');
+}
+
+// Test 3: Start a clock immediately with a known past time for testing
+var testStart = urlStart ? new Date(urlStart).getTime() : new Date('2026-03-24T06:00:00-07:00').getTime();
+var testNow = Date.now();
+log('Test start time: ' + new Date(testStart).toISOString(), '');
+log('Current time: ' + new Date(testNow).toISOString(), '');
+log('Elapsed ms: ' + (testNow - testStart), '');
+
+if (testNow - testStart > 0) {
+  log('✓ Start time is in the past — clock should tick', 'ok');
+} else {
+  log('✗ Start time is in the FUTURE — clock shows zeros until then', 'err');
+}
+
+// Start ticking
+var clockInterval = setInterval(function() {
+  var elapsed = Date.now() - testStart;
+  if (elapsed <= 0) {
+    clockEl.textContent = '00:00:00.00';
+    return;
+  }
+  var h = Math.floor(elapsed / 3600000);
+  var m = Math.floor((elapsed % 3600000) / 60000);
+  var s = Math.floor((elapsed % 60000) / 1000);
+  var cs = Math.floor((elapsed % 1000) / 10);
+  clockEl.textContent = 
+    String(h).padStart(2,'0') + ':' + 
+    String(m).padStart(2,'0') + ':' + 
+    String(s).padStart(2,'0') + '.' + 
+    String(cs).padStart(2,'0');
+}, 50);
+
+log('✓ Clock interval started', 'ok');
+
+// Test 4: Try JSONP API call
+log('Attempting JSONP call to API...', 'warn');
+var cbName = '_test_' + Date.now();
+var handled = false;
+
+window[cbName] = function(data) {
+  handled = true;
+  delete window[cbName];
+  var s = document.getElementById(cbName);
+  if (s) s.remove();
+  
+  log('✓ API responded!', 'ok');
+  
+  if (data && data.status === 'ok') {
+    log('✓ Status: ok', 'ok');
+    if (data.runners) log('✓ Runners: ' + data.runners.length + ' found', 'ok');
+    if (data.clock) {
+      log('✓ Clock data received:', 'ok');
+      log('  status: ' + data.clock.status, '');
+      log('  autoStartTime: ' + data.clock.autoStartTime, '');
+      log('  stoppedAt: ' + data.clock.stoppedAt, '');
+      log('  confirmedTime: ' + data.clock.confirmedTime, '');
+      log('  advisory: ' + data.clock.advisory, '');
+      
+      // Use the API start time for the clock
+      if (data.clock.autoStartTime && data.clock.status === 'running') {
+        testStart = new Date(data.clock.autoStartTime).getTime();
+        log('✓ Clock updated to API start time', 'ok');
+      }
+    } else {
+      log('✗ No clock data in response', 'err');
+    }
+  } else {
+    log('✗ Bad response: ' + JSON.stringify(data).substring(0, 200), 'err');
+  }
+};
+
+var script = document.createElement('script');
+script.id = cbName;
+script.src = API_URL + '?callback=' + cbName + '&t=' + Date.now();
+script.onerror = function() {
+  if (handled) return;
+  handled = true;
+  delete window[cbName];
+  script.remove();
+  log('✗ JSONP script failed to load', 'err');
+  log('  This means the API URL is wrong, not deployed, or not set to "Anyone"', 'err');
+};
+document.head.appendChild(script);
+
+setTimeout(function() {
+  if (!handled) {
+    handled = true;
+    delete window[cbName];
+    var s = document.getElementById(cbName);
+    if (s) s.remove();
+    log('✗ JSONP timed out after 10 seconds', 'err');
+    log('  The script loaded but the callback never fired', 'err');
+    log('  Check: is the Apps Script deployed as "Anyone" access?', 'err');
+  }
+}, 10000);
+</script>
+</body>
+</html>
