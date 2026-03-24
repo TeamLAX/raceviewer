@@ -1064,7 +1064,7 @@ function startStopwatch() {
   el.innerHTML = `
     <div class="total-label">Stop Watch</div>
     <div class="total-value" id="stopwatchDisplay">00:00:00.00</div>
-    <div id="clockUnofficialBanner" style="display:none;font-family:Gabarito,sans-serif;font-size:1rem;font-weight:900;color:#ef4444;text-align:center;margin-top:4px;letter-spacing:0.15em;text-transform:uppercase"></div>`;
+    <div id="clockUnofficialBanner" style="display:none;font-family:Gabarito,sans-serif;font-size:1rem;font-weight:900;color:#ef4444;text-align:center;letter-spacing:0.15em;text-transform:uppercase;display:none"></div>`;
   
   var flashToggle = true;
   
@@ -1083,23 +1083,26 @@ function startStopwatch() {
     
     // Stopped — freeze the time, flash UNOFFICIAL
     if (clockStatus === 'stopped') {
-      // Calculate frozen time from start
-      var frozenElapsed = Date.now() - stopwatchStart;
-      if (clockStoppedAt) {
-        displayEl.textContent = clockStoppedAt;
-      } else if (frozenElapsed > 0) {
-        // Use calculated elapsed if no stoppedAt value
-        var fh = Math.floor(frozenElapsed / 3600000);
-        var fm = Math.floor((frozenElapsed % 3600000) / 60000);
-        var fs = Math.floor((frozenElapsed % 60000) / 1000);
-        displayEl.textContent = String(fh).padStart(2,'0') + ':' + String(fm).padStart(2,'0') + ':' + String(fs).padStart(2,'0');
+      // Calculate frozen time
+      var frozenTime = clockStoppedAt;
+      if (!frozenTime) {
+        var frozenElapsed = Date.now() - stopwatchStart;
+        if (frozenElapsed > 0) {
+          var fh = Math.floor(frozenElapsed / 3600000);
+          var fm = Math.floor((frozenElapsed % 3600000) / 60000);
+          var fs = Math.floor((frozenElapsed % 60000) / 1000);
+          frozenTime = String(fh).padStart(2,'0') + ':' + String(fm).padStart(2,'0') + ':' + String(fs).padStart(2,'0');
+        } else {
+          frozenTime = '00:00:00';
+        }
       }
-      displayEl.style.color = '#ef4444';
+      displayEl.textContent = frozenTime + '  |';
+      displayEl.style.color = '';
       
-      // Flash UNOFFICIAL — 2 sec on, 300ms off
+      // Flash only UNOFFICIAL — 2 sec on, 300ms off
       if (bannerEl) {
-        bannerEl.style.display = 'block';
-        bannerEl.textContent = 'UNOFFICIAL';
+        bannerEl.style.display = 'inline';
+        bannerEl.textContent = '  UNOFFICIAL';
         var cycle = Date.now() % 2300;
         bannerEl.style.opacity = cycle < 2000 ? '1' : '0';
       }
