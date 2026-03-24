@@ -1283,11 +1283,49 @@ function initCarousel() {
     }, PAUSE_AFTER_INTERACTION);
   }
 
-  // Listen for mouse wheel and touch on the viewport
-  viewport.addEventListener('wheel', onUserInteraction);
-  viewport.addEventListener('touchstart', onUserInteraction);
-  viewport.addEventListener('touchmove', onUserInteraction);
-  viewport.addEventListener('mousedown', onUserInteraction);
+  // Manual scroll via mouse wheel
+  viewport.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    onUserInteraction();
+    if (e.deltaY > 0) {
+      // Scroll down
+      currentTopRow++;
+      if (currentTopRow >= originalRowCount) currentTopRow = 0;
+    } else {
+      // Scroll up
+      currentTopRow--;
+      if (currentTopRow < 0) currentTopRow = originalRowCount - 1;
+    }
+    track.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+    track.style.transform = 'translateY(-' + (currentTopRow * rowOffset) + 'px)';
+  }, { passive: false });
+
+  // Manual scroll via touch swipe
+  let touchStartY = 0;
+  let touchMoved = false;
+  viewport.addEventListener('touchstart', function(e) {
+    touchStartY = e.touches[0].clientY;
+    touchMoved = false;
+    onUserInteraction();
+  }, { passive: true });
+  viewport.addEventListener('touchmove', function(e) {
+    touchMoved = true;
+  }, { passive: true });
+  viewport.addEventListener('touchend', function(e) {
+    if (!touchMoved) return;
+    var diff = touchStartY - e.changedTouches[0].clientY;
+    if (Math.abs(diff) > 30) {
+      if (diff > 0) {
+        currentTopRow++;
+        if (currentTopRow >= originalRowCount) currentTopRow = 0;
+      } else {
+        currentTopRow--;
+        if (currentTopRow < 0) currentTopRow = originalRowCount - 1;
+      }
+      track.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+      track.style.transform = 'translateY(-' + (currentTopRow * rowOffset) + 'px)';
+    }
+  }, { passive: true });
 
   carouselTimer = setInterval(() => {
     // Skip auto-scroll if user recently interacted
