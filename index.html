@@ -544,25 +544,18 @@
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       padding: 5px 10px 20px;
-    }
-    .sponsor-card .sponsor-top {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-    }
-    .sponsor-card .sponsor-logo-col {
-      flex-shrink: 0;
-      margin-top: 3px;
+      align-items: center;
     }
     .sponsor-card .sponsor-tag {
       font-family: 'Gabarito', sans-serif;
       font-size: 0.65rem;
-      text-transform: lowercase;
+      text-transform: uppercase;
       letter-spacing: 0.1em;
       color: #fdba74;
       line-height: 1;
+      align-self: flex-start;
     }
     .sponsor-card .sponsor-logo {
       width: 77px;
@@ -571,18 +564,14 @@
       border-radius: 6px;
       background: rgba(255,255,255,0.05);
       padding: 4px;
-    }
-    .sponsor-card .sponsor-identity {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
+      margin-top: 3px;
     }
     .sponsor-card .sponsor-name {
       font-family: 'Gabarito', sans-serif;
       font-weight: 700;
       font-size: 1.15rem;
       color: #fff;
-      text-align: left;
+      text-align: center;
       line-height: 1.15;
       white-space: normal;
       overflow: hidden;
@@ -594,7 +583,7 @@
     /* ── Sponsor Overlay ── */
     .sponsor-overlay-card {
       position: relative;
-      background: linear-gradient(135deg, #1a2a1a 0%, #2a3a2a 50%, #1a2a1a 100%);
+      background: linear-gradient(135deg, #3b2416 0%, #7a3a12 50%, #2f1b13 100%);
       border: 2px solid rgba(245,158,11,0.2);
       border-radius: 20px;
       padding: 2rem;
@@ -604,8 +593,8 @@
       flex-direction: column;
       align-items: center;
       gap: 16px;
-      transform: scale(0.85) rotateY(180deg);
-      transition: transform 0.5s ease;
+      transform: scale(0.85) rotateY(360deg);
+      transition: transform 0.6s ease;
     }
     .runner-overlay.visible .sponsor-overlay-card {
       transform: scale(1) rotateY(0deg);
@@ -669,13 +658,13 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s;
-      transform: rotateY(180deg);
+      transform: rotateY(360deg);
     }
     .stage-overlay.visible {
       opacity: 1;
       pointer-events: auto;
       transform: rotateY(0deg);
-      transition: opacity 0.3s, transform 0.5s ease;
+      transition: opacity 0.3s, transform 0.6s ease;
     }
     .stage-overlay-header {
       padding: 14px 20px;
@@ -814,8 +803,8 @@
       flex-direction: column;
       align-items: center;
       gap: 16px;
-      transform: scale(0.85) rotateY(180deg);
-      transition: transform 0.5s ease;
+      transform: scale(0.85) rotateY(360deg);
+      transition: transform 0.6s ease;
     }
     .runner-overlay.visible .overlay-card {
       transform: scale(1) rotateY(0deg);
@@ -1290,15 +1279,9 @@ function render() {
   
   function createSponsorCard(ad, idx) {
     return '<div class="card sponsor-card" onclick="openSponsorOverlay(' + idx + ')">' +
-      '<div class="sponsor-top">' +
-        '<div class="sponsor-logo-col">' +
-          (ad.logoUrl ? '<img class="sponsor-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : '<div class="sponsor-logo"></div>') +
-        '</div>' +
-        '<div class="sponsor-identity">' +
-          '<div class="sponsor-tag">sponsor</div>' +
-          '<div class="sponsor-name">' + (ad.name || '') + '</div>' +
-        '</div>' +
-      '</div>' +
+      '<div class="sponsor-tag">SPONSOR</div>' +
+      (ad.logoUrl ? '<img class="sponsor-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : '<div class="sponsor-logo"></div>') +
+      '<div class="sponsor-name">' + (ad.name || '') + '</div>' +
     '</div>';
   }
   
