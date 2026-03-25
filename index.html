@@ -1395,28 +1395,34 @@ function initCarousel() {
   let currentTopRow = 0;
   let userInteracted = false;
   let interactionTimer = null;
+  const maxRow = originalRowCount * 2 - VISIBLE_ROWS; // max scroll position in the doubled set
 
   function onUserInteraction() {
     userInteracted = true;
     if (interactionTimer) clearTimeout(interactionTimer);
     interactionTimer = setTimeout(function() {
       userInteracted = false;
+      // Reset position to first set for seamless auto-scroll resume
+      if (currentTopRow >= originalRowCount) {
+        track.style.transition = 'none';
+        currentTopRow = currentTopRow - originalRowCount;
+        track.style.transform = 'translateY(-' + (currentTopRow * rowOffset) + 'px)';
+      }
     }, PAUSE_AFTER_INTERACTION);
   }
 
-  // Manual scroll via mouse wheel
+  // Manual scroll via mouse wheel — smooth, no snap
   viewport.addEventListener('wheel', function(e) {
     e.preventDefault();
     onUserInteraction();
     if (e.deltaY > 0) {
-      // Scroll down
       currentTopRow++;
-      if (currentTopRow >= originalRowCount) currentTopRow = 0;
     } else {
-      // Scroll up
       currentTopRow--;
-      if (currentTopRow < 0) currentTopRow = originalRowCount - 1;
     }
+    // Clamp within the doubled range
+    if (currentTopRow < 0) currentTopRow = 0;
+    if (currentTopRow > maxRow) currentTopRow = maxRow;
     track.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
     track.style.transform = 'translateY(-' + (currentTopRow * rowOffset) + 'px)';
   }, { passive: false });
@@ -1438,11 +1444,11 @@ function initCarousel() {
     if (Math.abs(diff) > 30) {
       if (diff > 0) {
         currentTopRow++;
-        if (currentTopRow >= originalRowCount) currentTopRow = 0;
       } else {
         currentTopRow--;
-        if (currentTopRow < 0) currentTopRow = originalRowCount - 1;
       }
+      if (currentTopRow < 0) currentTopRow = 0;
+      if (currentTopRow > maxRow) currentTopRow = maxRow;
       track.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
       track.style.transform = 'translateY(-' + (currentTopRow * rowOffset) + 'px)';
     }
