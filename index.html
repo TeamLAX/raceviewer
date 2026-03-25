@@ -1451,8 +1451,8 @@ function render() {
               <div class="stat-label">Distance</div>
               <div class="stat-value ${ar.halfway ? 'halfway-active-distance' : ''}" style="position:relative;overflow:visible;z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - ar.difficulty) * 5}%;background:linear-gradient(105deg, ${gaugeColor(ar.difficulty)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${ar.distance || '—'}</div>
             </div>
-            <div class="map-icon-btn" onclick="openStageDetail(${ar.leg})" title="View stage map">
-              <img src="https://filedn.com/lVLsOock1BfXwnRWAjG1lob/LAAPOA/B2VMap.png" alt="Map" style="width:26px;height:26px;object-fit:contain;margin-bottom:-5px" />
+            <div class="map-icon-btn" onclick="event.stopPropagation(); openStageDetail(${ar.leg})" title="View stage map" style="cursor:pointer">
+              <img src="https://filedn.com/lVLsOock1BfXwnRWAjG1lob/LAAPOA/B2VMap.png" alt="Map" style="width:26px;height:26px;object-fit:contain;margin-bottom:-5px;pointer-events:none" />
             </div>
             <div class="stat-box">
               <div class="stat-label">Running Since</div>
