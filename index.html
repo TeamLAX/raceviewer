@@ -95,46 +95,19 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Halfway split-flap effect on Running Since value */
-    .halfway-split {
+    /* Halfway — white gradient fill on distance field from left */
+    .halfway-active-distance {
       position: relative;
       overflow: hidden;
-      background: linear-gradient(to bottom, #f59e0b 50%, rgba(255,255,255,0.12) 50%) !important;
-      color: transparent !important;
-      -webkit-background-clip: text;
-      background-clip: text;
+      z-index: 1;
     }
-    /* Fallback for browsers that don't support background-clip:text well */
-    @supports not (-webkit-background-clip: text) {
-      .halfway-split {
-        color: #f59e0b !important;
-        background: linear-gradient(to bottom, rgba(255,255,255,0.12) 50%, #f59e0b 50%) !important;
-      }
-    }
-    .stat-value.halfway-split {
-      position: relative;
-      color: #fff !important;
-      background: none !important;
-      -webkit-background-clip: unset;
-      background-clip: unset;
-      overflow: hidden;
-    }
-    .stat-value.halfway-split::before {
+    .halfway-active-distance::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 50%;
-      background: #f59e0b;
-      border-radius: 4px 4px 0 0;
-      z-index: -1;
-    }
-    .stat-value.halfway-split::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 50%;
-      background: rgba(255,255,255,0.12);
-      border-radius: 0 0 4px 4px;
+      top: 0; left: 0; bottom: 0;
+      width: 50%;
+      background: linear-gradient(105deg, rgba(255,255,255,0.25) 70%, transparent 100%);
+      border-radius: 3px;
       z-index: -1;
     }
 
@@ -200,17 +173,6 @@
     .active-stats .gauge-wrap {
       flex-shrink: 0;
       margin-left: -3px;
-    }
-    .active-hint {
-      font-size: 0.4rem;
-      color: rgba(255,255,255,0.35);
-      text-align: center;
-      margin-top: 4px;
-      cursor: pointer;
-      letter-spacing: 0.03em;
-    }
-    .active-hint:hover, .active-hint:active {
-      color: #f59e0b;
     }
     .active-stats .gauge-bar {
       width: 5px;
@@ -472,6 +434,7 @@
       html, body { overflow: auto; height: auto; }
       #app {
         height: auto;
+        flex-direction: column;
         min-height: 100vh;
         overflow: visible;
         display: block;
@@ -551,7 +514,6 @@
       }
       .active-stats .stat-value { font-size: 0.65rem; padding: 3px 6px; }
       .active-stats .stat-label { font-size: 0.45rem; }
-      .active-hint { font-size: 0.4rem; margin-top: 5px; }
       
       /* Grid — natural scroll on mobile */
       .grid-viewport {
@@ -567,12 +529,105 @@
       .card {
         width: 100%;
       }
+      
     }
+    /* ── Sponsor Cards ── */
+    .card.sponsor-card {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 8px;
+    }
+    .sponsor-card .sponsor-tag {
+      font-size: 0.45rem;
+      text-transform: lowercase;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.35);
+    }
+    .sponsor-card .sponsor-logo {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      padding: 4px;
+    }
+    .sponsor-card .sponsor-name {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    /* ── Sponsor Overlay ── */
+    .sponsor-overlay-card {
+      position: relative;
+      background: linear-gradient(135deg, #1a2a1a 0%, #2a3a2a 50%, #1a2a1a 100%);
+      border: 2px solid rgba(245,158,11,0.2);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 90vw;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      transform: scale(0.85) rotateY(180deg);
+      transition: transform 0.5s ease;
+    }
+    .runner-overlay.visible .sponsor-overlay-card {
+      transform: scale(1) rotateY(0deg);
+    }
+    .sponsor-overlay-logo {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      background: rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .sponsor-overlay-name {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      text-align: center;
+    }
+    .sponsor-overlay-desc {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      line-height: 1.5;
+      max-width: 320px;
+    }
+    .sponsor-overlay-link {
+      display: inline-block;
+      padding: 8px 20px;
+      background: var(--accent, #f59e0b);
+      color: #1a0f05;
+      border-radius: 6px;
+      text-decoration: none;
+      font-family: 'Gabarito', sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+
     /* ── Distance link styling ── */
     .distance-link {
-      text-decoration: underline;
-      text-decoration-color: rgba(245,158,11,0.4);
-      text-underline-offset: 2px;
+      text-decoration: none;
+      position: relative;
+    }
+    .touch-icon {
+      position: absolute;
+      bottom: -10px;
+      left: -4px;
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
     }
 
     /* ── Stage Detail Overlay ── */
@@ -587,10 +642,13 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s;
+      transform: rotateY(180deg);
     }
     .stage-overlay.visible {
       opacity: 1;
       pointer-events: auto;
+      transform: rotateY(0deg);
+      transition: opacity 0.3s, transform 0.5s ease;
     }
     .stage-overlay-header {
       padding: 14px 20px;
@@ -729,11 +787,11 @@
       flex-direction: column;
       align-items: center;
       gap: 16px;
-      transform: scale(0.85);
-      transition: transform 0.3s;
+      transform: scale(0.85) rotateY(180deg);
+      transition: transform 0.5s ease;
     }
     .runner-overlay.visible .overlay-card {
-      transform: scale(1);
+      transform: scale(1) rotateY(0deg);
     }
     .overlay-photo {
       width: 160px;
@@ -1003,7 +1061,19 @@ function fetchRunners() {
       var runnersChanged = JSON.stringify(newRunners) !== JSON.stringify(runners);
       runners = newRunners;
       
-      if (runnersChanged || !document.getElementById('gridTrack')) {
+      // Update active ads from API
+      var newAds = [];
+      if (data.ads && data.ads.length) {
+        data.ads.forEach(function(ad) {
+          if (ad.active && (ad.name || ad.logoUrl)) {
+            newAds.push(ad);
+          }
+        });
+      }
+      var adsChanged = JSON.stringify(newAds) !== JSON.stringify(activeAds);
+      activeAds = newAds;
+      
+      if (runnersChanged || adsChanged || !document.getElementById('gridTrack')) {
         render();
       }
     }
@@ -1182,15 +1252,53 @@ function createCard(r) {
 
 /* ── Carousel state ── */
 let carouselTimer = null;
+let activeAds = [];
 
 function render() {
   if (carouselTimer) clearInterval(carouselTimer);
 
   const app = document.getElementById('app');
-  const allCards = runners.map(createCard).join('');
   const ar = getActiveRunner();
+  const allRunnerCards = runners.map(createCard).join('');
+  
+  // Build sponsor cards from activeAds
+  const adCardsHTML = activeAds.map(function(ad, idx) {
+    return '<div class="card sponsor-card" onclick="openSponsorOverlay(' + idx + ')">' +
+      '<div class="sponsor-tag">sponsor</div>' +
+      (ad.logoUrl ? '<img class="sponsor-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : '') +
+      '<div class="sponsor-name">' + (ad.name || '') + '</div>' +
+      '</div>';
+  }).join('');
+  
+  // Mix ads into runner cards — insert an ad after every 5 runners
+  const runnerCardArr = runners.map(createCard);
+  const mixedCards = [];
+  var adIdx = 0;
+  for (var ci = 0; ci < runnerCardArr.length; ci++) {
+    mixedCards.push(runnerCardArr[ci]);
+    if ((ci + 1) % 5 === 0 && adIdx < activeAds.length) {
+      var ad = activeAds[adIdx];
+      mixedCards.push('<div class="card sponsor-card" onclick="openSponsorOverlay(' + adIdx + ')">' +
+        '<div class="sponsor-tag">sponsor</div>' +
+        (ad.logoUrl ? '<img class="sponsor-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : '') +
+        '<div class="sponsor-name">' + (ad.name || '') + '</div>' +
+        '</div>');
+      adIdx++;
+    }
+  }
+  // Append remaining ads at the end
+  while (adIdx < activeAds.length) {
+    var ad = activeAds[adIdx];
+    mixedCards.push('<div class="card sponsor-card" onclick="openSponsorOverlay(' + adIdx + ')">' +
+      '<div class="sponsor-tag">sponsor</div>' +
+      (ad.logoUrl ? '<img class="sponsor-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : '') +
+      '<div class="sponsor-name">' + (ad.name || '') + '</div>' +
+      '</div>');
+    adIdx++;
+  }
+  
+  const allCards = mixedCards.join('');
   const isMobile = window.innerWidth <= 600;
-
   const gridContent = isMobile ? allCards : allCards + allCards;
 
   app.innerHTML = `
@@ -1211,7 +1319,7 @@ function render() {
           <div class="active-stats">
             <div class="stat-box" onclick="openStageDetail(${ar.leg})" style="cursor:pointer">
               <div class="stat-label">Distance</div>
-              <div class="stat-value distance-link">${ar.distance || '—'}</div>
+              <div class="stat-value distance-link ${ar.halfway ? 'halfway-active-distance' : ''}">${ar.distance || '—'}<img class="touch-icon" src="https://filedn.com/lVLsOock1BfXwnRWAjG1lob/LAAPOA/touch%20click.png" alt="" /></div>
             </div>
             <div class="gauge-wrap">
               <div class="gauge-bar">
@@ -1220,10 +1328,9 @@ function render() {
             </div>
             <div class="stat-box">
               <div class="stat-label">Running Since</div>
-              <div class="stat-value ${ar.halfway ? 'halfway-split' : ''}">${ar.start}</div>
+              <div class="stat-value">${ar.start}</div>
             </div>
           </div>
-          <div class="active-hint" onclick="openStageDetail(${ar.leg})">tap distance for stage &amp; B2V route details</div>
         </div>
         <div class="active-photo-col">
           <img src="${ar.photo}" alt="${ar.name}" class="active-photo" />
@@ -1483,6 +1590,44 @@ function closeOverlay() {
   if (ring) ring.classList.remove('running');
   const overlay = document.getElementById('runnerOverlay');
   overlay.classList.remove('visible');
+}
+
+function openSponsorOverlay(idx) {
+  var ad = activeAds[idx];
+  if (!ad) return;
+  
+  const overlay = document.getElementById('runnerOverlay');
+  
+  overlay.innerHTML = `
+    <div class="sponsor-overlay-card" onclick="event.stopPropagation()">
+      <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
+        <svg viewBox="0 0 36 36">
+          <circle class="ring-bg" cx="18" cy="18" r="16" />
+          <circle class="ring-countdown" id="overlayCountdownRing" cx="18" cy="18" r="16" />
+        </svg>
+        <span class="close-x">✕</span>
+      </button>
+      <div style="font-size:0.55rem;text-transform:lowercase;letter-spacing:0.15em;color:rgba(255,255,255,0.35)">sponsor</div>
+      ${ad.logoUrl ? '<img class="sponsor-overlay-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : ''}
+      <div class="sponsor-overlay-name">${ad.name || ''}</div>
+      ${ad.description ? '<div class="sponsor-overlay-desc">' + ad.description + '</div>' : ''}
+      ${ad.linkUrl ? '<a class="sponsor-overlay-link" href="' + ad.linkUrl + '" target="_blank">Visit Website</a>' : ''}
+      <div class="overlay-timer">
+        <div class="overlay-timer-bar" id="overlayTimerBar"></div>
+      </div>
+    </div>`;
+  
+  overlay.classList.add('visible');
+  
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const ring = document.getElementById('overlayCountdownRing');
+      if (ring) ring.classList.add('running');
+    });
+  });
+  
+  if (overlayTimer) clearTimeout(overlayTimer);
+  overlayTimer = setTimeout(closeOverlay, 22000);
 }
 
 /* ── Stage Detail Map Data (from B2V All_Stages PDF) ── */
