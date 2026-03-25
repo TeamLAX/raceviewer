@@ -542,14 +542,16 @@
       padding: 10px 8px;
     }
     .sponsor-card .sponsor-tag {
-      font-size: 0.45rem;
-      text-transform: lowercase;
-      letter-spacing: 0.12em;
-      color: rgba(255,255,255,0.35);
+      font-family: 'Gabarito', sans-serif;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #fdba74;
+      line-height: 1;
     }
     .sponsor-card .sponsor-logo {
-      width: 60px;
-      height: 60px;
+      width: 90px;
+      height: 90px;
       object-fit: contain;
       border-radius: 6px;
       background: rgba(255,255,255,0.05);
@@ -557,11 +559,16 @@
     }
     .sponsor-card .sponsor-name {
       font-family: 'Gabarito', sans-serif;
-      font-size: 0.65rem;
       font-weight: 700;
+      font-size: 1.15rem;
       color: #fff;
       text-align: center;
-      line-height: 1.2;
+      line-height: 1.15;
+      white-space: normal;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     /* ── Sponsor Overlay ── */
@@ -1366,8 +1373,8 @@ function initCarousel() {
 
   const style = getComputedStyle(document.documentElement);
   const cols = parseInt(style.getPropertyValue('--grid-cols')) || 5;
-  const totalRunners = runners.length;
-  const originalRowCount = Math.ceil(totalRunners / cols);
+  const totalCards = track.querySelectorAll('.card').length / 2; // divided by 2 because cards are doubled
+  const originalRowCount = Math.ceil(totalCards / cols);
   const VISIBLE_ROWS = 2;
   const INTERVAL_MS = 20000;
   const PAUSE_AFTER_INTERACTION = 20000;
