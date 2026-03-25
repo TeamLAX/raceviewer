@@ -742,15 +742,21 @@
     .distance-link {
       text-decoration: none;
     }
-    .touch-icon {
-      position: absolute;
-      bottom: -6px;
-      left: 2px;
-      width: 14px;
-      height: 14px;
-      pointer-events: none;
-      z-index: 10;
+    .map-icon-btn {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      cursor: pointer;
       opacity: 0.7;
+      transition: opacity 0.2s, transform 0.2s;
+      flex-shrink: 0;
+      margin: 0 7px;
+      position: relative;
+      z-index: 5;
+    }
+    .map-icon-btn:hover {
+      opacity: 1;
+      transform: scale(1.15);
     }
 
     /* ── Stage Detail Overlay ── */
@@ -1362,12 +1368,7 @@ function createCard(r) {
     <div class="card-stats">
       <div class="stat-box">
         <div class="stat-label">Distance</div>
-        <div class="stat-value">${r.distance || '—'}</div>
-      </div>
-      <div class="gauge-wrap">
-        <div class="gauge-bar">
-          <div class="gauge-fill" style="height:${(21 - r.difficulty) * 5}%;background:${gaugeColor(r.difficulty)}"></div>
-        </div>
+        <div class="stat-value" style="position:relative;overflow:hidden;z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - r.difficulty) * 5}%;background:linear-gradient(105deg, ${gaugeColor(r.difficulty)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${r.distance || '—'}</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">Run Time</div>
@@ -1445,16 +1446,13 @@ function render() {
           <div class="label"><span class="pulse-dot"></span>WHO'S RUNNING NOW</div>
           <div class="active-name">${ar.name}</div>
           <div class="active-leg">Stage ${ar.leg}</div>
-          <div class="active-stats">
-            <div class="stat-box" onclick="openStageDetail(${ar.leg})" style="cursor:pointer;position:relative;overflow:visible">
+          <div class="active-stats" style="gap:0;align-items:flex-end">
+            <div class="stat-box" style="position:relative;overflow:visible">
               <div class="stat-label">Distance</div>
-              <div class="stat-value distance-link ${ar.halfway ? 'halfway-active-distance' : ''}">${ar.distance || '—'}</div>
-              <img class="touch-icon" src="https://filedn.com/lVLsOock1BfXwnRWAjG1lob/LAAPOA/touch%20click.png" alt="" />
+              <div class="stat-value ${ar.halfway ? 'halfway-active-distance' : ''}" style="position:relative;overflow:visible;z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - ar.difficulty) * 5}%;background:linear-gradient(105deg, ${gaugeColor(ar.difficulty)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${ar.distance || '—'}</div>
             </div>
-            <div class="gauge-wrap">
-              <div class="gauge-bar">
-                <div class="gauge-fill" style="height:${(21 - ar.difficulty) * 5}%;background:${gaugeColor(ar.difficulty)}"></div>
-              </div>
+            <div class="map-icon-btn" onclick="openStageDetail(${ar.leg})" title="View stage map">
+              <img src="https://filedn.com/lVLsOock1BfXwnRWAjG1lob/LAAPOA/B2VMap.png" alt="Map" style="width:26px;height:26px;object-fit:contain;margin-bottom:-5px" />
             </div>
             <div class="stat-box">
               <div class="stat-label">Running Since</div>
