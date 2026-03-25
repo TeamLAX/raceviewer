@@ -583,6 +583,111 @@
 
     /* ── Sponsor Overlay ── */
     .sponsor-overlay-card {
+
+    /* ── Alternates Card ── */
+    .card.alternates-card {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 5px 10px 10px;
+    }
+    .alternates-card .alt-title {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #fdba74;
+      line-height: 1;
+      text-align: center;
+      margin-bottom: 2px;
+    }
+    .alternates-card .alt-name {
+      font-family: 'Lexend Deca', sans-serif;
+      font-size: 0.6rem;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    /* ── Alternates Overlay ── */
+    .alt-overlay-card {
+      position: relative;
+      background: linear-gradient(135deg, #3b2416 0%, #7a3a12 50%, #2f1b13 100%);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 90vw;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      transform: scale(0.85) rotateY(180deg);
+      transition: transform 0.6s ease;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .runner-overlay.visible .alt-overlay-card {
+      transform: scale(1) rotateY(0deg);
+    }
+    .alt-overlay-title {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fdba74;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .alt-overlay-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .alt-overlay-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+    }
+    .alt-overlay-name {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      flex: 1;
+    }
+    .alt-overlay-meta {
+      text-align: center;
+      min-width: 50px;
+      position: relative;
+    }
+    .alt-overlay-years {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: rgba(255,255,255,0.3);
+      line-height: 1;
+    }
+    .alt-overlay-type {
+      font-family: 'Gabarito', sans-serif;
+      font-size: 0.45rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f59e0b;
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    /* ── Sponsor Overlay ── */
+    .sponsor-overlay-card {
       position: relative;
       background: linear-gradient(135deg, #3b2416 0%, #7a3a12 50%, #2f1b13 100%);
       border: 2px solid rgba(245,158,11,0.2);
@@ -1089,7 +1194,12 @@ function fetchRunners() {
       var adsChanged = JSON.stringify(newAds) !== JSON.stringify(activeAds);
       activeAds = newAds;
       
-      if (runnersChanged || adsChanged || !document.getElementById('gridTrack')) {
+      // Update alternates from API
+      var newAlts = data.alternates || [];
+      var altsChanged = JSON.stringify(newAlts) !== JSON.stringify(alternates);
+      alternates = newAlts;
+      
+      if (runnersChanged || adsChanged || altsChanged || !document.getElementById('gridTrack')) {
         render();
       }
     }
@@ -1269,6 +1379,7 @@ function createCard(r) {
 /* ── Carousel state ── */
 let carouselTimer = null;
 let activeAds = [];
+let alternates = [];
 
 function render() {
   if (carouselTimer) clearInterval(carouselTimer);
@@ -1299,6 +1410,19 @@ function render() {
   while (adIdx < activeAds.length) {
     mixedCards.push(createSponsorCard(activeAds[adIdx], adIdx));
     adIdx++;
+  }
+  
+  // Add ALTERNATES card if there are alternates
+  if (alternates.length > 0) {
+    var altNamesHTML = alternates.map(function(a) {
+      return '<div class="alt-name">' + a.name + '</div>';
+    }).join('');
+    mixedCards.push(
+      '<div class="card alternates-card" onclick="openAlternatesOverlay()">' +
+        '<div class="alt-title">ALTERNATES</div>' +
+        altNamesHTML +
+      '</div>'
+    );
   }
   
   const allCards = mixedCards.join('');
@@ -1623,6 +1747,53 @@ function openSponsorOverlay(idx) {
       <div class="sponsor-overlay-name">${ad.name || ''}</div>
       ${ad.description ? '<div class="sponsor-overlay-desc">' + ad.description + '</div>' : ''}
       ${ad.linkUrl ? '<a class="sponsor-overlay-link" href="' + ad.linkUrl + '" target="_blank">Visit Website</a>' : ''}
+      <div class="overlay-timer">
+        <div class="overlay-timer-bar" id="overlayTimerBar"></div>
+      </div>
+    </div>`;
+  
+  overlay.classList.add('visible');
+  
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const ring = document.getElementById('overlayCountdownRing');
+      if (ring) ring.classList.add('running');
+    });
+  });
+  
+  if (overlayTimer) clearTimeout(overlayTimer);
+  overlayTimer = setTimeout(closeOverlay, 22000);
+}
+
+function openAlternatesOverlay() {
+  if (!alternates.length) return;
+  
+  const overlay = document.getElementById('runnerOverlay');
+  
+  var rowsHTML = alternates.map(function(a) {
+    var typeLabel = a.type === 'CIV' ? 'CIVILIAN' : 'SWORN';
+    return '<div class="alt-overlay-row">' +
+      '<div class="alt-overlay-name">' + a.name + '</div>' +
+      '<div class="alt-overlay-meta">' +
+        '<div class="alt-overlay-years">' + (a.years || '') + '</div>' +
+        '<div class="alt-overlay-type">' + typeLabel + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  
+  overlay.innerHTML = `
+    <div class="alt-overlay-card" onclick="event.stopPropagation()">
+      <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
+        <svg viewBox="0 0 36 36">
+          <circle class="ring-bg" cx="18" cy="18" r="16" />
+          <circle class="ring-countdown" id="overlayCountdownRing" cx="18" cy="18" r="16" />
+        </svg>
+        <span class="close-x">✕</span>
+      </button>
+      <div class="alt-overlay-title">Alternates</div>
+      <div class="alt-overlay-list">
+        ${rowsHTML}
+      </div>
       <div class="overlay-timer">
         <div class="overlay-timer-bar" id="overlayTimerBar"></div>
       </div>
