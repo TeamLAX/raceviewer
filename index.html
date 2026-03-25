@@ -95,7 +95,7 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Halfway — white gradient fill on distance field from left */
+    /* Halfway — flashing checkered flag pattern on left half of distance field */
     .halfway-active-distance {
       position: relative;
       overflow: hidden;
@@ -106,9 +106,17 @@
       position: absolute;
       top: 0; left: 0; bottom: 0;
       width: 50%;
-      background: linear-gradient(105deg, rgba(255,255,255,0.25) 70%, transparent 100%);
+      background: 
+        repeating-conic-gradient(#fff 0% 25%, transparent 0% 50%) 
+        0 0 / 8px 8px;
+      opacity: 0;
       border-radius: 3px;
       z-index: -1;
+      animation: halfwayFlash 2.25s infinite;
+    }
+    @keyframes halfwayFlash {
+      0%, 66.7% { opacity: 0.35; }
+      66.7%, 100% { opacity: 0; }
     }
 
     /* Active runner panel — left-aligned above cards */
@@ -536,33 +544,45 @@
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 10px 8px;
+      gap: 8px;
+      padding: 5px 10px 20px;
+    }
+    .sponsor-card .sponsor-top {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .sponsor-card .sponsor-logo-col {
+      flex-shrink: 0;
+      margin-top: 3px;
     }
     .sponsor-card .sponsor-tag {
       font-family: 'Gabarito', sans-serif;
       font-size: 0.65rem;
-      text-transform: uppercase;
+      text-transform: lowercase;
       letter-spacing: 0.1em;
       color: #fdba74;
       line-height: 1;
     }
     .sponsor-card .sponsor-logo {
-      width: 90px;
-      height: 90px;
+      width: 77px;
+      height: 77px;
       object-fit: contain;
       border-radius: 6px;
       background: rgba(255,255,255,0.05);
       padding: 4px;
+    }
+    .sponsor-card .sponsor-identity {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
     }
     .sponsor-card .sponsor-name {
       font-family: 'Gabarito', sans-serif;
       font-weight: 700;
       font-size: 1.15rem;
       color: #fff;
-      text-align: center;
+      text-align: left;
       line-height: 1.15;
       white-space: normal;
       overflow: hidden;
@@ -1268,14 +1288,19 @@ function render() {
   const ar = getActiveRunner();
   const allRunnerCards = runners.map(createCard).join('');
   
-  // Build sponsor cards from activeAds
-  const adCardsHTML = activeAds.map(function(ad, idx) {
+  function createSponsorCard(ad, idx) {
     return '<div class="card sponsor-card" onclick="openSponsorOverlay(' + idx + ')">' +
-      '<div class="sponsor-tag">sponsor</div>' +
-      (ad.logoUrl ? '<img class="sponsor-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : '') +
-      '<div class="sponsor-name">' + (ad.name || '') + '</div>' +
-      '</div>';
-  }).join('');
+      '<div class="sponsor-top">' +
+        '<div class="sponsor-logo-col">' +
+          (ad.logoUrl ? '<img class="sponsor-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : '<div class="sponsor-logo"></div>') +
+        '</div>' +
+        '<div class="sponsor-identity">' +
+          '<div class="sponsor-tag">sponsor</div>' +
+          '<div class="sponsor-name">' + (ad.name || '') + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
   
   // Mix ads into runner cards — insert an ad after every 5 runners
   const runnerCardArr = runners.map(createCard);
@@ -1284,23 +1309,12 @@ function render() {
   for (var ci = 0; ci < runnerCardArr.length; ci++) {
     mixedCards.push(runnerCardArr[ci]);
     if ((ci + 1) % 5 === 0 && adIdx < activeAds.length) {
-      var ad = activeAds[adIdx];
-      mixedCards.push('<div class="card sponsor-card" onclick="openSponsorOverlay(' + adIdx + ')">' +
-        '<div class="sponsor-tag">sponsor</div>' +
-        (ad.logoUrl ? '<img class="sponsor-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : '') +
-        '<div class="sponsor-name">' + (ad.name || '') + '</div>' +
-        '</div>');
+      mixedCards.push(createSponsorCard(activeAds[adIdx], adIdx));
       adIdx++;
     }
   }
-  // Append remaining ads at the end
   while (adIdx < activeAds.length) {
-    var ad = activeAds[adIdx];
-    mixedCards.push('<div class="card sponsor-card" onclick="openSponsorOverlay(' + adIdx + ')">' +
-      '<div class="sponsor-tag">sponsor</div>' +
-      (ad.logoUrl ? '<img class="sponsor-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : '') +
-      '<div class="sponsor-name">' + (ad.name || '') + '</div>' +
-      '</div>');
+    mixedCards.push(createSponsorCard(activeAds[adIdx], adIdx));
     adIdx++;
   }
   
