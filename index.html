@@ -1615,8 +1615,10 @@ window.addEventListener('resize', () => {
 let overlayTimer = null;
 
 function openRunnerOverlay(leg) {
+  try {
+  leg = parseInt(leg);
   const r = runners.find(run => run.leg === leg);
-  if (!r) return;
+  if (!r) { alert('Runner not found for leg ' + leg); return; }
   
   const overlay = document.getElementById('runnerOverlay');
   const yearsDisplay = r.years || '';
@@ -1716,6 +1718,7 @@ function openRunnerOverlay(leg) {
   // Auto-close after 22 seconds
   if (overlayTimer) clearTimeout(overlayTimer);
   overlayTimer = setTimeout(closeOverlay, 22000);
+  } catch(e) { alert('Overlay error: ' + e.message); }
 }
 
 function closeOverlay() {
@@ -1842,9 +1845,14 @@ let stageFlashInterval = null;
 let stageDetailTimer = null;
 
 function openStageDetail(leg) {
-  if (typeof L === 'undefined') { alert('Map is still loading, try again in a moment.'); return; }
+  leg = parseInt(leg);
+  console.log('openStageDetail called for leg', leg);
+  if (typeof L === 'undefined') { 
+    alert('Map is still loading, try again in a moment.'); 
+    return; 
+  }
   const stage = stageData[leg];
-  if (!stage) return;
+  if (!stage) { console.log('No stage data for leg', leg); return; }
   
   // Clear any existing auto-close timer
   if (stageDetailTimer) { clearTimeout(stageDetailTimer); stageDetailTimer = null; }
