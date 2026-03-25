@@ -235,6 +235,8 @@
       margin-bottom: 30px;
       overflow: hidden;
       flex-shrink: 0;
+      position: relative;
+      z-index: 10;
     }
     .grid-track {
       display: grid;
@@ -253,6 +255,7 @@
       flex-direction: column;
       gap: 8px;
       transition: background 0.2s;
+      cursor: pointer;
     }
     .card:hover { background: rgba(255,255,255,0.12); }
 
@@ -1475,10 +1478,7 @@ function render() {
     </div>`;
 
   requestAnimationFrame(() => {
-    /* Start live stopwatch */
     startStopwatch();
-
-    // Delay carousel init slightly to ensure cards have rendered sizes
     setTimeout(initCarousel, 100);
   });
 }
@@ -1615,10 +1615,9 @@ window.addEventListener('resize', () => {
 let overlayTimer = null;
 
 function openRunnerOverlay(leg) {
-  try {
   leg = parseInt(leg);
   const r = runners.find(run => run.leg === leg);
-  if (!r) { alert('Runner not found for leg ' + leg); return; }
+  if (!r) return;
   
   const overlay = document.getElementById('runnerOverlay');
   const yearsDisplay = r.years || '';
@@ -1718,7 +1717,6 @@ function openRunnerOverlay(leg) {
   // Auto-close after 22 seconds
   if (overlayTimer) clearTimeout(overlayTimer);
   overlayTimer = setTimeout(closeOverlay, 22000);
-  } catch(e) { alert('Overlay error: ' + e.message); }
 }
 
 function closeOverlay() {
