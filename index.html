@@ -1616,6 +1616,7 @@ let overlayTimer = null;
 
 function openRunnerOverlay(leg) {
   leg = parseInt(leg);
+  ensureOverlays();
   const r = runners.find(run => run.leg === leg);
   if (!r) return;
   
@@ -1728,6 +1729,7 @@ function closeOverlay() {
 }
 
 function openSponsorOverlay(idx) {
+  ensureOverlays();
   var ad = activeAds[idx];
   if (!ad) return;
   
@@ -1766,6 +1768,7 @@ function openSponsorOverlay(idx) {
 }
 
 function openAlternatesOverlay() {
+  ensureOverlays();
   if (!alternates.length) return;
   
   const overlay = document.getElementById('runnerOverlay');
@@ -2020,15 +2023,21 @@ function closeStageDetail() {
 }
 
 // ── Initialize ──
-try {
-  render();
-  if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
-    fetchRunners();
-    setInterval(fetchRunners, POLL_INTERVAL);
+render();
+if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
+  fetchRunners();
+  setInterval(fetchRunners, POLL_INTERVAL);
+}
+
+// Ensure overlay elements exist
+function ensureOverlays() {
+  if (!document.getElementById('runnerOverlay')) {
+    var div = document.createElement('div');
+    div.className = 'runner-overlay';
+    div.id = 'runnerOverlay';
+    div.onclick = closeOverlay;
+    document.body.appendChild(div);
   }
-} catch(e) {
-  console.error('B2V Init Error:', e);
-  document.body.innerHTML = '<div style="color:red;padding:20px;font-family:monospace">Init Error: ' + e.message + '</div>';
 }
 </script>
 </body>
