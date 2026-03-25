@@ -1074,7 +1074,6 @@
 </head>
 <body>
 <div id="app"></div>
-<div class="runner-overlay" id="runnerOverlay" onclick="closeOverlay()"></div>
 <div class="stage-overlay" id="stageOverlay">
   <div class="stage-overlay-header">
     <h2 id="stageOverlayTitle">Stage</h2>
@@ -1616,11 +1615,13 @@ let overlayTimer = null;
 
 function openRunnerOverlay(leg) {
   leg = parseInt(leg);
-  ensureOverlays();
   const r = runners.find(run => run.leg === leg);
   if (!r) return;
   
-  const overlay = document.getElementById('runnerOverlay');
+  // Remove any existing overlay
+  var old = document.getElementById('runnerOverlay');
+  if (old) old.remove();
+  
   const yearsDisplay = r.years || '';
   
   // Calculate pace (min/mile) from time and distance
@@ -1639,7 +1640,6 @@ function openRunnerOverlay(leg) {
     }
   }
   
-  // Difficulty label: 1=most difficult, 20=least difficult
   let diffLabel = '';
   const d = r.difficulty;
   if (d <= 4) diffLabel = 'Extreme';
@@ -1648,7 +1648,6 @@ function openRunnerOverlay(leg) {
   else if (d <= 16) diffLabel = 'Moderate';
   else diffLabel = 'Easy';
   
-  // Stage elevations from B2V PDF (start elevation in feet)
   const STAGE_ELEVATIONS = {
     1:474, 2:474, 3:470, 4:1168, 5:1880, 6:1319, 7:1528, 8:2143,
     9:2664, 10:2536, 11:2606, 12:2766, 13:3076, 14:3370, 15:4215,
@@ -1657,6 +1656,11 @@ function openRunnerOverlay(leg) {
   const elevation = r.elevation || STAGE_ELEVATIONS[r.leg] || '';
   const elevDisplay = elevation ? Number(elevation).toLocaleString() + ' ft' : '—';
   
+  // Create overlay element
+  var overlay = document.createElement('div');
+  overlay.id = 'runnerOverlay';
+  overlay.className = 'runner-overlay';
+  overlay.onclick = function() { closeOverlay(); };
   overlay.innerHTML = `
     <div class="overlay-card" onclick="event.stopPropagation()">
       <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
@@ -1703,38 +1707,46 @@ function openRunnerOverlay(leg) {
       </div>
     </div>`;
   
-  overlay.classList.add('visible');
+  document.body.appendChild(overlay);
   
-  // Start countdown ring and bar
+  // Trigger animation after append
   requestAnimationFrame(() => {
+    overlay.classList.add('visible');
     requestAnimationFrame(() => {
-      const bar = document.getElementById('overlayTimerBar');
+      var bar = document.getElementById('overlayTimerBar');
       if (bar) bar.classList.add('running');
-      const ring = document.getElementById('overlayCountdownRing');
+      var ring = document.getElementById('overlayCountdownRing');
       if (ring) ring.classList.add('running');
     });
   });
   
-  // Auto-close after 22 seconds
   if (overlayTimer) clearTimeout(overlayTimer);
   overlayTimer = setTimeout(closeOverlay, 22000);
 }
 
 function closeOverlay() {
   if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
-  const ring = document.getElementById('overlayCountdownRing');
-  if (ring) ring.classList.remove('running');
-  const overlay = document.getElementById('runnerOverlay');
-  overlay.classList.remove('visible');
+  var overlay = document.getElementById('runnerOverlay');
+  if (overlay) {
+    overlay.classList.remove('visible');
+    setTimeout(function() {
+      var el = document.getElementById('runnerOverlay');
+      if (el) el.remove();
+    }, 700);
+  }
 }
 
 function openSponsorOverlay(idx) {
-  ensureOverlays();
   var ad = activeAds[idx];
   if (!ad) return;
   
-  const overlay = document.getElementById('runnerOverlay');
+  var old = document.getElementById('runnerOverlay');
+  if (old) old.remove();
   
+  var overlay = document.createElement('div');
+  overlay.id = 'runnerOverlay';
+  overlay.className = 'runner-overlay';
+  overlay.onclick = function() { closeOverlay(); };
   overlay.innerHTML = `
     <div class="sponsor-overlay-card" onclick="event.stopPropagation()">
       <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
@@ -1754,11 +1766,12 @@ function openSponsorOverlay(idx) {
       </div>
     </div>`;
   
-  overlay.classList.add('visible');
+  document.body.appendChild(overlay);
   
   requestAnimationFrame(() => {
+    overlay.classList.add('visible');
     requestAnimationFrame(() => {
-      const ring = document.getElementById('overlayCountdownRing');
+      var ring = document.getElementById('overlayCountdownRing');
       if (ring) ring.classList.add('running');
     });
   });
@@ -1768,10 +1781,10 @@ function openSponsorOverlay(idx) {
 }
 
 function openAlternatesOverlay() {
-  ensureOverlays();
   if (!alternates.length) return;
   
-  const overlay = document.getElementById('runnerOverlay');
+  var old = document.getElementById('runnerOverlay');
+  if (old) old.remove();
   
   var rowsHTML = alternates.map(function(a) {
     var typeLabel = a.type === 'CIV' ? 'CIVILIAN' : 'SWORN';
@@ -1784,6 +1797,10 @@ function openAlternatesOverlay() {
     '</div>';
   }).join('');
   
+  var overlay = document.createElement('div');
+  overlay.id = 'runnerOverlay';
+  overlay.className = 'runner-overlay';
+  overlay.onclick = function() { closeOverlay(); };
   overlay.innerHTML = `
     <div class="alt-overlay-card" onclick="event.stopPropagation()">
       <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
@@ -1802,11 +1819,12 @@ function openAlternatesOverlay() {
       </div>
     </div>`;
   
-  overlay.classList.add('visible');
+  document.body.appendChild(overlay);
   
   requestAnimationFrame(() => {
+    overlay.classList.add('visible');
     requestAnimationFrame(() => {
-      const ring = document.getElementById('overlayCountdownRing');
+      var ring = document.getElementById('overlayCountdownRing');
       if (ring) ring.classList.add('running');
     });
   });
@@ -2027,17 +2045,6 @@ render();
 if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
   fetchRunners();
   setInterval(fetchRunners, POLL_INTERVAL);
-}
-
-// Ensure overlay elements exist
-function ensureOverlays() {
-  if (!document.getElementById('runnerOverlay')) {
-    var div = document.createElement('div');
-    div.className = 'runner-overlay';
-    div.id = 'runnerOverlay';
-    div.onclick = closeOverlay;
-    document.body.appendChild(div);
-  }
 }
 </script>
 </body>
