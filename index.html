@@ -1290,11 +1290,13 @@ function render() {
   
   // Add ALTERNATES card if there are alternates
   if (alternates.length > 0) {
+    var altCount = alternates.length;
+    var altFontSize = altCount <= 5 ? '1.15rem' : altCount <= 8 ? '0.7rem' : '0.55rem';
     var altNamesHTML = alternates.map(function(a) {
-      return '<div style="font-size:0.6rem;color:rgba(255,255,255,0.8);line-height:1.5;text-align:center">' + a.name + '</div>';
+      return '<div style="font-family:Gabarito,sans-serif;font-size:' + altFontSize + ';font-weight:700;color:#fff;line-height:1.3;text-align:center">' + a.name + '</div>';
     }).join('');
     mixedCards.push(
-      '<div class="card" onclick="openAlternatesOverlay()" style="cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:5px 10px 20px;align-items:center">' +
+      '<div class="card" onclick="openAlternatesOverlay()" style="cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:5px 10px 20px;align-items:center;justify-content:center">' +
         '<div style="font-family:Gabarito,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#fdba74;line-height:1;text-align:center">ALTERNATES</div>' +
         altNamesHTML +
       '</div>'
