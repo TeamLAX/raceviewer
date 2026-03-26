@@ -1294,7 +1294,7 @@ function render() {
       return '<div style="font-size:0.6rem;color:rgba(255,255,255,0.8);line-height:1.5;text-align:center">' + a.name + '</div>';
     }).join('');
     mixedCards.push(
-      '<div class="card" onclick="openAlternatesOverlay()" style="cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:5px 10px 10px;align-items:center">' +
+      '<div class="card" onclick="openAlternatesOverlay()" style="cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:5px 10px 20px;align-items:center">' +
         '<div style="font-family:Gabarito,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#fdba74;line-height:1;text-align:center">ALTERNATES</div>' +
         altNamesHTML +
       '</div>'
@@ -1529,8 +1529,13 @@ function openRunnerOverlay(leg) {
   const elevation = r.elevation || STAGE_ELEVATIONS[r.leg] || '';
   const elevDisplay = elevation ? Number(elevation).toLocaleString() + ' ft' : '—';
   
-  overlay.innerHTML = `
-    <div class="overlay-card" onclick="event.stopPropagation()">
+  const hasMessage = r.message && r.message.trim().length > 0;
+  const messageText = hasMessage ? r.message.trim().substring(0, 395) : '';
+  
+  if (hasMessage) {
+    // Compact layout with message
+    overlay.innerHTML = `
+    <div class="overlay-card" onclick="event.stopPropagation()" style="padding:5px 2rem 2rem">
       <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
         <svg viewBox="0 0 36 36">
           <circle class="ring-bg" cx="18" cy="18" r="16" />
@@ -1538,20 +1543,25 @@ function openRunnerOverlay(leg) {
         </svg>
         <span class="close-x">✕</span>
       </button>
-      <div class="overlay-leg">Stage ${r.leg}</div>
-      <img src="${r.photo}" alt="${r.name}" class="overlay-photo" />
-      <div class="overlay-name">${r.name}</div>
-      <div class="overlay-badge-row">
-        ${makeBadge(yearsDisplay)}
+      <div class="overlay-leg" style="font-size:70%;margin-top:0">Stage ${r.leg}</div>
+      <div style="display:flex;gap:14px;align-items:flex-start;width:100%">
+        <img src="${r.photo}" alt="${r.name}" class="overlay-photo" style="width:120px;height:120px" />
+        <div style="display:flex;flex-direction:column;justify-content:flex-start;gap:4px;padding-top:4px">
+          <div class="overlay-name" style="text-align:left">${r.name}</div>
+          <div class="overlay-badge-row" style="justify-content:flex-start">
+            ${makeBadge(yearsDisplay)}
+          </div>
+        </div>
       </div>
-      <div class="overlay-stats-grid">
+      <div style="width:100%;padding:0 12px;margin-top:10px;text-align:left;font-size:0.75rem;color:rgba(255,255,255,0.75);line-height:1.5;font-family:'Lexend Deca',sans-serif">${messageText}</div>
+      <div class="overlay-stats-grid" style="margin-top:10px">
         <div class="overlay-stat">
           <div class="stat-label">Distance</div>
           <div class="stat-value">${r.distance || '—'}</div>
         </div>
         <div class="overlay-stat">
           <div class="stat-label">Difficulty</div>
-          <div class="stat-value" style="position:relative;overflow:hidden;color:#fff;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,0.5);z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - r.difficulty) * 5}%;background:linear-gradient(105deg, ${gaugeColor(r.difficulty)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${r.difficulty}</div>
+          <div class="stat-value" style="position:relative;overflow:hidden;color:#fff;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,0.5);z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - d) * 5}%;background:linear-gradient(105deg, ${gaugeColor(d)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${d}</div>
         </div>
         <div class="overlay-stat">
           <div class="stat-label">Run Time</div>
@@ -1574,6 +1584,54 @@ function openRunnerOverlay(leg) {
         <div class="overlay-timer-bar" id="overlayTimerBar"></div>
       </div>
     </div>`;
+  } else {
+    // Standard layout without message
+    overlay.innerHTML = `
+    <div class="overlay-card" onclick="event.stopPropagation()">
+      <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
+        <svg viewBox="0 0 36 36">
+          <circle class="ring-bg" cx="18" cy="18" r="16" />
+          <circle class="ring-countdown" id="overlayCountdownRing" cx="18" cy="18" r="16" />
+        </svg>
+        <span class="close-x">✕</span>
+      </button>
+      <div class="overlay-leg">Stage ${r.leg}</div>
+      <img src="${r.photo}" alt="${r.name}" class="overlay-photo" />
+      <div class="overlay-name">${r.name}</div>
+      <div class="overlay-badge-row">
+        ${makeBadge(yearsDisplay)}
+      </div>
+      <div class="overlay-stats-grid">
+        <div class="overlay-stat">
+          <div class="stat-label">Distance</div>
+          <div class="stat-value">${r.distance || '—'}</div>
+        </div>
+        <div class="overlay-stat">
+          <div class="stat-label">Difficulty</div>
+          <div class="stat-value" style="position:relative;overflow:hidden;color:#fff;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,0.5);z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - d) * 5}%;background:linear-gradient(105deg, ${gaugeColor(d)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${d}</div>
+        </div>
+        <div class="overlay-stat">
+          <div class="stat-label">Run Time</div>
+          <div class="stat-value">${r.time || '—'}</div>
+        </div>
+        <div class="overlay-stat">
+          <div class="stat-label">Pace</div>
+          <div class="stat-value">${paceDisplay}</div>
+        </div>
+        <div class="overlay-stat">
+          <div class="stat-label">Started</div>
+          <div class="stat-value">${r.start || '—'}</div>
+        </div>
+        <div class="overlay-stat">
+          <div class="stat-label">Elevation</div>
+          <div class="stat-value">${elevDisplay}</div>
+        </div>
+      </div>
+      <div class="overlay-timer">
+        <div class="overlay-timer-bar" id="overlayTimerBar"></div>
+      </div>
+    </div>`;
+  }
   
   overlay.classList.add('visible');
   
@@ -1646,10 +1704,17 @@ function openAlternatesOverlay() {
   var rowsHTML = alternates.map(function(a) {
     var typeLabel = a.type === 'CIV' ? 'CIVILIAN' : 'SWORN';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.06);border-radius:8px">' +
-      '<div style="font-family:Gabarito,sans-serif;font-size:1rem;font-weight:700;color:#fff;flex:1">' + a.name + '</div>' +
-      '<div style="text-align:center;min-width:50px;position:relative">' +
-        '<div style="font-family:Gabarito,sans-serif;font-size:1.6rem;font-weight:900;color:rgba(255,255,255,0.3);line-height:1">' + (a.years || '') + '</div>' +
-        '<div style="font-family:Gabarito,sans-serif;font-size:0.45rem;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#f59e0b;position:absolute;bottom:2px;left:50%;transform:translateX(-50%);white-space:nowrap">' + typeLabel + '</div>' +
+      '<div style="font-family:Gabarito,sans-serif;font-size:1.15rem;font-weight:700;color:#fff;flex:1;line-height:1.15">' + a.name + '</div>' +
+      '<div style="text-align:center;min-width:55px;position:relative;display:flex;align-items:center;justify-content:center">' +
+        '<div style="font-family:Gabarito,sans-serif;font-size:1.6rem;font-weight:900;color:rgba(255,255,255,0.25);line-height:1">' + (a.years || '') + '</div>' +
+        '<div style="position:absolute;top:calc(50% + 6px);left:50%;transform:translate(-50%,-50%);white-space:nowrap">' +
+          '<svg width="70" height="20" viewBox="0 0 70 20" style="overflow:visible">' +
+            '<defs><path id="arch_' + a.name.replace(/[^a-zA-Z0-9]/g,'') + '" d="M 0,16 Q 35,2 70,16" fill="none"/></defs>' +
+            '<text fill="#f59e0b" font-family="Gabarito,sans-serif" font-size="6" font-weight="800" letter-spacing="1.5" text-anchor="middle">' +
+              '<textPath href="#arch_' + a.name.replace(/[^a-zA-Z0-9]/g,'') + '" startOffset="50%">' + typeLabel + '</textPath>' +
+            '</text>' +
+          '</svg>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }).join('');
