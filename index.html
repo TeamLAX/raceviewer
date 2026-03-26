@@ -1707,9 +1707,10 @@ function openAlternatesOverlay() {
     var typeLabel = a.type === 'CIV' ? 'CIVILIAN' : 'SWORN';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.06);border-radius:8px">' +
       '<div style="font-family:Gabarito,sans-serif;font-size:1.15rem;font-weight:700;color:#fff;flex:1;line-height:1.15">' + a.name + '</div>' +
-      '<div style="text-align:center;min-width:55px;position:relative;display:flex;align-items:center;justify-content:center">' +
-        '<div style="font-family:Gabarito,sans-serif;font-size:1.6rem;font-weight:900;color:rgba(255,255,255,0.25);line-height:1">' + (a.years || '') + '</div>' +
-        '<div style="position:absolute;top:calc(50% + 6px);left:50%;transform:translate(-50%,-50%);white-space:nowrap">' +
+      '<div style="text-align:center;min-width:55px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center">' +
+        '<div style="font-family:Gabarito,sans-serif;font-size:1.6rem;font-weight:900;color:rgba(255,255,255,0.25);line-height:1;margin-top:-2px">' + (a.years || '') + '</div>' +
+        '<div style="font-family:Gabarito,sans-serif;font-size:0.35rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.25);margin-top:0.5px">YRS</div>' +
+        '<div style="position:absolute;top:calc(50% + 2px);left:50%;transform:translate(-50%,-50%);white-space:nowrap">' +
           '<svg width="70" height="20" viewBox="0 0 70 20" style="overflow:visible">' +
             '<defs><path id="arch_' + a.name.replace(/[^a-zA-Z0-9]/g,'') + '" d="M 0,16 Q 35,2 70,16" fill="none"/></defs>' +
             '<text fill="#f59e0b" font-family="Gabarito,sans-serif" font-size="6" font-weight="800" letter-spacing="1.5" text-anchor="middle">' +
