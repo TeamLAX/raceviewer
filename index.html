@@ -235,8 +235,6 @@
       margin-bottom: 30px;
       overflow: hidden;
       flex-shrink: 0;
-      position: relative;
-      z-index: 10;
     }
     .grid-track {
       display: grid;
@@ -255,7 +253,6 @@
       flex-direction: column;
       gap: 8px;
       transition: background 0.2s;
-      cursor: pointer;
     }
     .card:hover { background: rgba(255,255,255,0.12); }
 
@@ -586,111 +583,6 @@
 
     /* ── Sponsor Overlay ── */
     .sponsor-overlay-card {
-
-    /* ── Alternates Card ── */
-    .card.alternates-card {
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 5px 10px 10px;
-    }
-    .alternates-card .alt-title {
-      font-family: 'Gabarito', sans-serif;
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #fdba74;
-      line-height: 1;
-      text-align: center;
-      margin-bottom: 2px;
-    }
-    .alternates-card .alt-name {
-      font-family: 'Lexend Deca', sans-serif;
-      font-size: 0.6rem;
-      color: rgba(255,255,255,0.8);
-      line-height: 1.5;
-      text-align: center;
-    }
-
-    /* ── Alternates Overlay ── */
-    .alt-overlay-card {
-      position: relative;
-      background: linear-gradient(135deg, #3b2416 0%, #7a3a12 50%, #2f1b13 100%);
-      border: 2px solid rgba(255,255,255,0.15);
-      border-radius: 20px;
-      padding: 2rem;
-      width: 90vw;
-      max-width: 420px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      transform: scale(0.85) rotateY(180deg);
-      transition: transform 0.6s ease;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    .runner-overlay.visible .alt-overlay-card {
-      transform: scale(1) rotateY(0deg);
-    }
-    .alt-overlay-title {
-      font-family: 'Gabarito', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 800;
-      color: #fdba74;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-    .alt-overlay-list {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .alt-overlay-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 8px;
-    }
-    .alt-overlay-name {
-      font-family: 'Gabarito', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      color: #fff;
-      flex: 1;
-    }
-    .alt-overlay-meta {
-      text-align: center;
-      min-width: 50px;
-      position: relative;
-    }
-    .alt-overlay-years {
-      font-family: 'Gabarito', sans-serif;
-      font-size: 1.6rem;
-      font-weight: 900;
-      color: rgba(255,255,255,0.3);
-      line-height: 1;
-    }
-    .alt-overlay-type {
-      font-family: 'Gabarito', sans-serif;
-      font-size: 0.45rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #f59e0b;
-      position: absolute;
-      bottom: 2px;
-      left: 50%;
-      transform: translateX(-50%);
-      white-space: nowrap;
-    }
-
-    /* ── Sponsor Overlay ── */
-    .sponsor-overlay-card {
       position: relative;
       background: linear-gradient(135deg, #3b2416 0%, #7a3a12 50%, #2f1b13 100%);
       border: 2px solid rgba(245,158,11,0.2);
@@ -742,26 +634,6 @@
     }
 
     /* ── Distance link styling ── */
-    .distance-link {
-      text-decoration: none;
-    }
-    .map-icon-btn {
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      cursor: pointer;
-      opacity: 0.7;
-      transition: opacity 0.2s, transform 0.2s;
-      flex-shrink: 0;
-      margin: 0 7px;
-      position: relative;
-      z-index: 5;
-    }
-    .map-icon-btn:hover {
-      opacity: 1;
-      transform: scale(1.15);
-    }
-
     /* ── Stage Detail Overlay ── */
     .stage-overlay {
       position: fixed;
@@ -1074,6 +946,7 @@
 </head>
 <body>
 <div id="app"></div>
+<div class="runner-overlay" id="runnerOverlay" onclick="closeOverlay()"></div>
 <div class="stage-overlay" id="stageOverlay">
   <div class="stage-overlay-header">
     <h2 id="stageOverlayTitle">Stage</h2>
@@ -1203,7 +1076,6 @@ function fetchRunners() {
       var adsChanged = JSON.stringify(newAds) !== JSON.stringify(activeAds);
       activeAds = newAds;
       
-      // Update alternates from API
       var newAlts = data.alternates || [];
       var altsChanged = JSON.stringify(newAlts) !== JSON.stringify(alternates);
       alternates = newAlts;
@@ -1419,11 +1291,11 @@ function render() {
   // Add ALTERNATES card if there are alternates
   if (alternates.length > 0) {
     var altNamesHTML = alternates.map(function(a) {
-      return '<div class="alt-name">' + a.name + '</div>';
+      return '<div style="font-size:0.6rem;color:rgba(255,255,255,0.8);line-height:1.5;text-align:center">' + a.name + '</div>';
     }).join('');
     mixedCards.push(
-      '<div class="card alternates-card" onclick="openAlternatesOverlay()">' +
-        '<div class="alt-title">ALTERNATES</div>' +
+      '<div class="card" onclick="openAlternatesOverlay()" style="cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:5px 10px 10px;align-items:center">' +
+        '<div style="font-family:Gabarito,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#fdba74;line-height:1;text-align:center">ALTERNATES</div>' +
         altNamesHTML +
       '</div>'
     );
@@ -1453,7 +1325,7 @@ function render() {
               <div class="stat-label">Distance</div>
               <div class="stat-value ${ar.halfway ? 'halfway-active-distance' : ''}" style="position:relative;overflow:visible;z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - ar.difficulty) * 5}%;background:linear-gradient(105deg, ${gaugeColor(ar.difficulty)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${ar.distance || '—'}</div>
             </div>
-            <div class="map-icon-btn" onclick="event.stopPropagation(); openStageDetail(${ar.leg})" title="View stage map" style="cursor:pointer">
+            <div class="map-icon-btn" onclick="event.stopPropagation(); openStageDetail(${ar.leg})" style="cursor:pointer;display:flex;align-items:flex-end;justify-content:center;flex-shrink:0;margin:0 7px;position:relative;z-index:5;opacity:0.7">
               <img src="https://filedn.com/lVLsOock1BfXwnRWAjG1lob/LAAPOA/B2VMap.png" alt="Map" style="width:26px;height:26px;object-fit:contain;margin-bottom:-5px;pointer-events:none" />
             </div>
             <div class="stat-box">
@@ -1477,7 +1349,10 @@ function render() {
     </div>`;
 
   requestAnimationFrame(() => {
+    /* Start live stopwatch */
     startStopwatch();
+
+    // Delay carousel init slightly to ensure cards have rendered sizes
     setTimeout(initCarousel, 100);
   });
 }
@@ -1614,15 +1489,13 @@ window.addEventListener('resize', () => {
 let overlayTimer = null;
 
 function openRunnerOverlay(leg) {
-  leg = parseInt(leg);
   const r = runners.find(run => run.leg === leg);
   if (!r) return;
   
-  var old = document.getElementById('runnerOverlay');
-  if (old) old.remove();
-  
+  const overlay = document.getElementById('runnerOverlay');
   const yearsDisplay = r.years || '';
   
+  // Calculate pace (min/mile) from time and distance
   let paceDisplay = '—';
   if (r.time && r.time !== '--:--' && r.distance) {
     const distNum = parseFloat(r.distance);
@@ -1638,8 +1511,16 @@ function openRunnerOverlay(leg) {
     }
   }
   
+  // Difficulty label: 1=most difficult, 20=least difficult
+  let diffLabel = '';
   const d = r.difficulty;
+  if (d <= 4) diffLabel = 'Extreme';
+  else if (d <= 8) diffLabel = 'Hard';
+  else if (d <= 12) diffLabel = 'Challenging';
+  else if (d <= 16) diffLabel = 'Moderate';
+  else diffLabel = 'Easy';
   
+  // Stage elevations from B2V PDF (start elevation in feet)
   const STAGE_ELEVATIONS = {
     1:474, 2:474, 3:470, 4:1168, 5:1880, 6:1319, 7:1528, 8:2143,
     9:2664, 10:2536, 11:2606, 12:2766, 13:3076, 14:3370, 15:4215,
@@ -1648,12 +1529,8 @@ function openRunnerOverlay(leg) {
   const elevation = r.elevation || STAGE_ELEVATIONS[r.leg] || '';
   const elevDisplay = elevation ? Number(elevation).toLocaleString() + ' ft' : '—';
   
-  var overlay = document.createElement('div');
-  overlay.id = 'runnerOverlay';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.6s;';
-  overlay.onclick = function(e) { if (e.target === overlay) closeOverlay(); };
   overlay.innerHTML = `
-    <div class="overlay-card" onclick="event.stopPropagation()" style="transform:scale(1);transition:transform 0.6s ease">
+    <div class="overlay-card" onclick="event.stopPropagation()">
       <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
         <svg viewBox="0 0 36 36">
           <circle class="ring-bg" cx="18" cy="18" r="16" />
@@ -1674,7 +1551,7 @@ function openRunnerOverlay(leg) {
         </div>
         <div class="overlay-stat">
           <div class="stat-label">Difficulty</div>
-          <div class="stat-value" style="position:relative;overflow:hidden;color:#fff;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,0.5);z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - d) * 5}%;background:linear-gradient(105deg, ${gaugeColor(d)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${d}</div>
+          <div class="stat-value" style="position:relative;overflow:hidden;color:#fff;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,0.5);z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - r.difficulty) * 5}%;background:linear-gradient(105deg, ${gaugeColor(r.difficulty)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${r.difficulty}</div>
         </div>
         <div class="overlay-stat">
           <div class="stat-label">Run Time</div>
@@ -1693,40 +1570,44 @@ function openRunnerOverlay(leg) {
           <div class="stat-value">${elevDisplay}</div>
         </div>
       </div>
+      <div class="overlay-timer">
+        <div class="overlay-timer-bar" id="overlayTimerBar"></div>
+      </div>
     </div>`;
   
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+  overlay.classList.add('visible');
   
+  // Start countdown ring and bar
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const bar = document.getElementById('overlayTimerBar');
+      if (bar) bar.classList.add('running');
+      const ring = document.getElementById('overlayCountdownRing');
+      if (ring) ring.classList.add('running');
+    });
+  });
+  
+  // Auto-close after 22 seconds
   if (overlayTimer) clearTimeout(overlayTimer);
   overlayTimer = setTimeout(closeOverlay, 22000);
 }
 
 function closeOverlay() {
   if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
-  var overlay = document.getElementById('runnerOverlay');
-  if (overlay) {
-    overlay.style.opacity = '0';
-    setTimeout(function() {
-      var el = document.getElementById('runnerOverlay');
-      if (el) el.remove();
-    }, 600);
-  }
+  const ring = document.getElementById('overlayCountdownRing');
+  if (ring) ring.classList.remove('running');
+  const overlay = document.getElementById('runnerOverlay');
+  overlay.classList.remove('visible');
 }
 
 function openSponsorOverlay(idx) {
   var ad = activeAds[idx];
   if (!ad) return;
   
-  var old = document.getElementById('runnerOverlay');
-  if (old) old.remove();
+  const overlay = document.getElementById('runnerOverlay');
   
-  var overlay = document.createElement('div');
-  overlay.id = 'runnerOverlay';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.6s;';
-  overlay.onclick = function(e) { if (e.target === overlay) closeOverlay(); };
   overlay.innerHTML = `
-    <div class="sponsor-overlay-card" onclick="event.stopPropagation()" style="transform:scale(1)">
+    <div class="sponsor-overlay-card" onclick="event.stopPropagation()">
       <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
         <svg viewBox="0 0 36 36">
           <circle class="ring-bg" cx="18" cy="18" r="16" />
@@ -1734,15 +1615,24 @@ function openSponsorOverlay(idx) {
         </svg>
         <span class="close-x">✕</span>
       </button>
-      <div style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.15em;color:rgba(255,255,255,0.35)">sponsor</div>
+      <div style="font-size:0.55rem;text-transform:lowercase;letter-spacing:0.15em;color:rgba(255,255,255,0.35)">sponsor</div>
       ${ad.logoUrl ? '<img class="sponsor-overlay-logo" src="' + ad.logoUrl + '" alt="' + (ad.name||'') + '" />' : ''}
       <div class="sponsor-overlay-name">${ad.name || ''}</div>
       ${ad.description ? '<div class="sponsor-overlay-desc">' + ad.description + '</div>' : ''}
       ${ad.linkUrl ? '<a class="sponsor-overlay-link" href="' + ad.linkUrl + '" target="_blank">Visit Website</a>' : ''}
+      <div class="overlay-timer">
+        <div class="overlay-timer-bar" id="overlayTimerBar"></div>
+      </div>
     </div>`;
   
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+  overlay.classList.add('visible');
+  
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const ring = document.getElementById('overlayCountdownRing');
+      if (ring) ring.classList.add('running');
+    });
+  });
   
   if (overlayTimer) clearTimeout(overlayTimer);
   overlayTimer = setTimeout(closeOverlay, 22000);
@@ -1751,26 +1641,21 @@ function openSponsorOverlay(idx) {
 function openAlternatesOverlay() {
   if (!alternates.length) return;
   
-  var old = document.getElementById('runnerOverlay');
-  if (old) old.remove();
+  const overlay = document.getElementById('runnerOverlay');
   
   var rowsHTML = alternates.map(function(a) {
     var typeLabel = a.type === 'CIV' ? 'CIVILIAN' : 'SWORN';
-    return '<div class="alt-overlay-row">' +
-      '<div class="alt-overlay-name">' + a.name + '</div>' +
-      '<div class="alt-overlay-meta">' +
-        '<div class="alt-overlay-years">' + (a.years || '') + '</div>' +
-        '<div class="alt-overlay-type">' + typeLabel + '</div>' +
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.06);border-radius:8px">' +
+      '<div style="font-family:Gabarito,sans-serif;font-size:1rem;font-weight:700;color:#fff;flex:1">' + a.name + '</div>' +
+      '<div style="text-align:center;min-width:50px;position:relative">' +
+        '<div style="font-family:Gabarito,sans-serif;font-size:1.6rem;font-weight:900;color:rgba(255,255,255,0.3);line-height:1">' + (a.years || '') + '</div>' +
+        '<div style="font-family:Gabarito,sans-serif;font-size:0.45rem;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#f59e0b;position:absolute;bottom:2px;left:50%;transform:translateX(-50%);white-space:nowrap">' + typeLabel + '</div>' +
       '</div>' +
     '</div>';
   }).join('');
   
-  var overlay = document.createElement('div');
-  overlay.id = 'runnerOverlay';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.6s;';
-  overlay.onclick = function(e) { if (e.target === overlay) closeOverlay(); };
   overlay.innerHTML = `
-    <div class="alt-overlay-card" onclick="event.stopPropagation()" style="transform:scale(1)">
+    <div class="overlay-card" onclick="event.stopPropagation()" style="max-height:80vh;overflow-y:auto">
       <button class="overlay-close-btn" onclick="event.stopPropagation(); closeOverlay()">
         <svg viewBox="0 0 36 36">
           <circle class="ring-bg" cx="18" cy="18" r="16" />
@@ -1778,14 +1663,23 @@ function openAlternatesOverlay() {
         </svg>
         <span class="close-x">✕</span>
       </button>
-      <div class="alt-overlay-title">Alternates</div>
-      <div class="alt-overlay-list">
+      <div style="font-family:Gabarito,sans-serif;font-size:1.3rem;font-weight:800;color:#fdba74;text-transform:uppercase;letter-spacing:0.1em">Alternates</div>
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px">
         ${rowsHTML}
+      </div>
+      <div class="overlay-timer">
+        <div class="overlay-timer-bar" id="overlayTimerBar"></div>
       </div>
     </div>`;
   
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+  overlay.classList.add('visible');
+  
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const ring = document.getElementById('overlayCountdownRing');
+      if (ring) ring.classList.add('running');
+    });
+  });
   
   if (overlayTimer) clearTimeout(overlayTimer);
   overlayTimer = setTimeout(closeOverlay, 22000);
@@ -1822,14 +1716,9 @@ let stageFlashInterval = null;
 let stageDetailTimer = null;
 
 function openStageDetail(leg) {
-  leg = parseInt(leg);
-  console.log('openStageDetail called for leg', leg);
-  if (typeof L === 'undefined') { 
-    alert('Map is still loading, try again in a moment.'); 
-    return; 
-  }
+  if (typeof L === 'undefined') { alert('Map is still loading, try again in a moment.'); return; }
   const stage = stageData[leg];
-  if (!stage) { console.log('No stage data for leg', leg); return; }
+  if (!stage) return;
   
   // Clear any existing auto-close timer
   if (stageDetailTimer) { clearTimeout(stageDetailTimer); stageDetailTimer = null; }
@@ -1999,10 +1888,15 @@ function closeStageDetail() {
 }
 
 // ── Initialize ──
-render();
-if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
-  fetchRunners();
-  setInterval(fetchRunners, POLL_INTERVAL);
+try {
+  render();
+  if (API_URL !== 'YOUR_APPS_SCRIPT_URL') {
+    fetchRunners();
+    setInterval(fetchRunners, POLL_INTERVAL);
+  }
+} catch(e) {
+  console.error('B2V Init Error:', e);
+  document.body.innerHTML = '<div style="color:red;padding:20px;font-family:monospace">Init Error: ' + e.message + '</div>';
 }
 </script>
 </body>
