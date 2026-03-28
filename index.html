@@ -1257,6 +1257,72 @@ let carouselTimer = null;
 let activeAds = [];
 let alternates = [];
 
+/* ── Pre-Race Info Card Helpers ── */
+const RACE_GUN_TIME = new Date('2026-03-28T15:00:00-07:00').getTime(); // 3:00 PM PDT
+
+const categoryCompetitors = [
+  { num:21, name:'CDCR State Gold CCPOA' },
+  { num:52, name:'RSO Mixed 800' },
+  { num:71, name:'USBP BORSTAR' },
+  { num:72, name:'Riverside County DA' },
+  { num:73, name:'LA Field Office' },
+  { num:89, name:'CA Dept. of Justice' },
+  { num:129, name:'Comm Div/SECSD' },
+  { num:135, name:'LA City Attorney' },
+  { num:152, name:'OC Probation' },
+  { num:155, name:'CA DOJ' },
+  { num:208, name:'FED Stride Force' },
+  { num:220, name:'DMV/El Cajon PD' },
+  { num:250, name:'SB County DA' },
+  { num:270, name:'LASD Training' },
+  { num:282, name:'Hat Squad' },
+  { num:284, name:'LASD Personnel' },
+  { num:287, name:'Riverside PD Gray' }
+];
+
+function isRaceStarted() {
+  // Race panel switches on 90 seconds before gun time, or if active runner has a real start time
+  var ar = getActiveRunner();
+  if (ar && ar.start && ar.start !== '--:-- PDT' && ar.start !== '--:--') return true;
+  if (Date.now() >= RACE_GUN_TIME - 90000) return true;
+  return false;
+}
+
+function getCompetitorBadges() {
+  return categoryCompetitors.map(function(t) {
+    return '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:2px 6px;font-size:0.5rem;color:rgba(255,255,255,0.5);white-space:nowrap">' +
+      '<span style="color:#f59e0b;font-weight:700;font-family:Gabarito,sans-serif">#' + t.num + '</span> ' + t.name +
+    '</div>';
+  }).join('');
+}
+
+// Pre-race countdown updater
+let preRaceInterval = null;
+function startPreRaceCountdown() {
+  if (preRaceInterval) clearInterval(preRaceInterval);
+  preRaceInterval = setInterval(function() {
+    var el = document.getElementById('preRaceCountdown');
+    if (!el) return;
+    var now = Date.now();
+    var diff = RACE_GUN_TIME - now;
+    if (diff <= 0) {
+      el.innerHTML = '<span class="pulse-dot"></span> RACE IS LIVE';
+      clearInterval(preRaceInterval);
+      // Auto-switch to running view after a short delay
+      setTimeout(function() { render(); }, 3000);
+      return;
+    }
+    var hrs = Math.floor(diff / 3600000);
+    var mins = Math.floor((diff % 3600000) / 60000);
+    var secs = Math.floor((diff % 60000) / 1000);
+    var parts = [];
+    if (hrs > 0) parts.push(hrs + 'h');
+    parts.push(mins + 'm');
+    parts.push(secs + 's');
+    el.textContent = '⏱ Gun time in ' + parts.join(' ');
+  }, 1000);
+}
+
 function render() {
   if (carouselTimer) clearInterval(carouselTimer);
 
@@ -1316,6 +1382,26 @@ function render() {
       '<div style="font-size:0.5rem;color:rgba(255,255,255,0.3);margin-top:6px;text-align:center">Tap to view route</div>' +
     '</div>'
   );
+
+  // Add FINISH LINE LIVE card — only when Stage 20 is active
+  if (ar.leg === 20) {
+    mixedCards.push(
+      '<div class="card" onclick="openFinishLineLive()" style="cursor:pointer;display:flex;flex-direction:column;overflow:hidden;padding:0;position:relative">' +
+        '<div style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:10px 10px 0 0">' +
+          '<iframe src="https://www.youtube.com/embed/XwBOXC6ZaUk?autoplay=1&mute=1&playsinline=1&controls=0&modestbranding=1" style="position:absolute;inset:0;width:100%;height:100%;border:none;pointer-events:none" allow="autoplay;encrypted-media" allowfullscreen></iframe>' +
+          '<div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,0.7) 0%,transparent 50%);pointer-events:none"></div>' +
+          '<div style="position:absolute;top:6px;right:6px;background:rgba(239,68,68,0.9);color:#fff;font-family:Gabarito,sans-serif;font-size:0.5rem;font-weight:800;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:0.08em;display:flex;align-items:center;gap:3px"><span style="width:5px;height:5px;background:#fff;border-radius:50%;animation:pulse 1.4s infinite"></span>LIVE</div>' +
+        '</div>' +
+        '<div style="padding:6px 10px 8px;display:flex;align-items:center;gap:6px">' +
+          '<div style="font-size:1rem">🏁</div>' +
+          '<div>' +
+            '<div style="font-family:Gabarito,sans-serif;font-size:0.8rem;font-weight:800;color:#fff;line-height:1.1">Finish Line LIVE</div>' +
+            '<div style="font-size:0.5rem;color:rgba(255,255,255,0.4);margin-top:1px">Tap for fullscreen</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
   
   const allCards = mixedCards.join('');
   const isMobile = window.innerWidth <= 600;
@@ -1325,13 +1411,14 @@ function render() {
     <div class="header">
       <div class="header-info">
         <h1>Baker-to-Vegas<span class="pipe"> <span>|</span> </span><span class="title-team">Team LAX <span>2026</span></span></h1>
+        <div id="liveViewers" style="display:inline-block;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:20px;padding:2px 10px;margin-top:4px;font-size:0.5rem;color:rgba(255,255,255,0.18);font-family:Gabarito,sans-serif;font-weight:500;letter-spacing:0.03em;transition:color 0.5s"></div>
         <div class="captain">Team Captain Roxanna Carlos<br/>Airport Police, Sergeant</div>
       </div>
     </div>
     <div class="flex-spacer" style="flex:1"></div>
     <div class="bottom-cards-wrap">
       <div class="total-time-card" id="totalTime"></div>
-      <div class="active-panel">
+      ${isRaceStarted() ? `<div class="active-panel">
         <div class="active-info">
           <div class="label"><span class="pulse-dot"></span>WHO'S RUNNING NOW</div>
           <div class="active-name">${ar.name}</div>
@@ -1356,7 +1443,25 @@ function render() {
             ${makeBadge(ar.years || '')}
           </div>
         </div>
-      </div>
+      </div>` : `<div class="active-panel" style="flex-direction:column;gap:8px;width:fit-content;max-width:520px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-family:Gabarito,sans-serif;font-size:1.3rem;font-weight:800;color:#fff;line-height:1.1">Team <span style="color:#f59e0b">LAX</span></div>
+          <div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.2);border-radius:5px;padding:2px 8px;font-size:0.6rem;font-weight:700;color:#f59e0b;font-family:Gabarito,sans-serif">TEAM #24</div>
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:2px 8px;font-size:0.6rem;font-weight:600;color:rgba(255,255,255,0.6)">INV. MIXED 800</div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:#fdba74">Race Day</div>
+          <div style="font-family:Gabarito,sans-serif;font-size:0.85rem;font-weight:700;color:#fff">Sat, March 28, 2026</div>
+          <div style="font-size:0.6rem;color:rgba(255,255,255,0.4)">•</div>
+          <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:#fdba74">Gun Time</div>
+          <div style="font-family:Gabarito,sans-serif;font-size:0.85rem;font-weight:700;color:#fff">3:00 PM PDT</div>
+        </div>
+        <div id="preRaceCountdown" style="font-family:Gabarito,sans-serif;font-size:1.1rem;font-weight:700;color:#f59e0b;margin:2px 0"></div>
+        <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:6px;margin-top:2px">
+          <div style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.35);margin-bottom:4px">Other Teams in our Category</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px">${getCompetitorBadges()}</div>
+        </div>
+      </div>`}
     </div>
     <div class="grid-viewport">
       <div class="grid-track" id="gridTrack">
@@ -1367,6 +1472,9 @@ function render() {
   requestAnimationFrame(() => {
     /* Start live stopwatch */
     startStopwatch();
+
+    /* Start pre-race countdown if not yet racing */
+    if (!isRaceStarted()) startPreRaceCountdown();
 
     // Delay carousel init slightly to ensure cards have rendered sizes
     setTimeout(initCarousel, 100);
@@ -1765,6 +1873,33 @@ function closeSecretMap() {
   if (overlay) overlay.remove();
 }
 
+/* ── Finish Line LIVE ── */
+function openFinishLineLive() {
+  var overlay = document.createElement('div');
+  overlay.id = 'finishLiveOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column';
+  
+  overlay.innerHTML = 
+    '<div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:6px 14px;background:rgba(0,0,0,0.95);border-bottom:1px solid rgba(239,68,68,0.2)">' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<div style="font-size:1.1rem">🏁</div>' +
+        '<div style="font-family:Gabarito,sans-serif;font-size:0.9rem;font-weight:800;color:#fff">Finish Line LIVE</div>' +
+        '<div style="background:rgba(239,68,68,0.9);color:#fff;font-family:Gabarito,sans-serif;font-size:0.5rem;font-weight:800;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:0.08em;display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;background:#fff;border-radius:50%;animation:pulse 1.4s infinite"></span>LIVE</div>' +
+      '</div>' +
+      '<button onclick="closeFinishLineLive()" style="border:none;background:rgba(255,255,255,0.1);color:#fff;font-family:Lexend Deca,sans-serif;font-size:0.65rem;padding:5px 12px;border-radius:4px;cursor:pointer">✕ Back to Dashboard</button>' +
+    '</div>' +
+    '<div style="flex:1;position:relative;background:#000">' +
+      '<iframe src="https://www.youtube.com/embed/XwBOXC6ZaUk?autoplay=1&mute=0&playsinline=1&controls=1&modestbranding=1&rel=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allow="autoplay;encrypted-media;fullscreen" allowfullscreen></iframe>' +
+    '</div>';
+  
+  document.body.appendChild(overlay);
+}
+
+function closeFinishLineLive() {
+  var overlay = document.getElementById('finishLiveOverlay');
+  if (overlay) overlay.remove();
+}
+
 function openAlternatesOverlay() {
   if (!alternates.length) return;
   
@@ -2031,6 +2166,42 @@ try {
     fetchRunners();
     setInterval(fetchRunners, POLL_INTERVAL);
   }
+  // Live viewer heartbeat — pings every 30s, server counts active IPs within last 60s
+  (function initLiveViewers() {
+    var viewerIp = null;
+    var page = 'viewer';
+    
+    // Get IP once
+    fetch('https://api.ipify.org?format=json')
+      .then(function(r) { return r.json(); })
+      .then(function(d) { viewerIp = d.ip || 'unknown'; sendHeartbeat(); })
+      .catch(function() { viewerIp = 'unknown'; sendHeartbeat(); });
+    
+    function sendHeartbeat() {
+      var cb = '_hb_' + Date.now();
+      window[cb] = function(data) {
+        delete window[cb];
+        var sc = document.getElementById(cb); if (sc) sc.remove();
+        var el = document.getElementById('liveViewers');
+        if (el && data) {
+          var live = data.live || 0;
+          var total = data.unique || 0;
+          if (live > 0 || total > 0) {
+            el.textContent = 'VIEWS: ' + live + ' active | ' + total + ' total';
+            el.style.color = 'rgba(255,255,255,0.2)';
+          }
+        }
+      };
+      var sc = document.createElement('script');
+      sc.id = cb;
+      sc.src = API_URL + '?action=heartbeat&ip=' + (viewerIp||'') + '&page=' + page + '&ua=' + encodeURIComponent(navigator.userAgent.substring(0, 200)) + '&callback=' + cb + '&t=' + Date.now();
+      sc.onerror = function() { delete window[cb]; sc.remove(); };
+      document.head.appendChild(sc);
+    }
+    
+    // Heartbeat every 30 seconds
+    setInterval(sendHeartbeat, 30000);
+  })();
 } catch(e) {
   console.error('B2V Init Error:', e);
   document.body.innerHTML = '<div style="color:red;padding:20px;font-family:monospace">Init Error: ' + e.message + '</div>';
