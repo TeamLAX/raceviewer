@@ -1038,7 +1038,7 @@ function fetchRunners() {
         ...r,
         photo: r.photo || FALLBACK_PHOTO,
         name: r.name || 'Runner ' + r.leg,
-        time: r.time || r.coursetime || '--:--',
+        time: r.time || '--:--',
         start: r.start || '--:-- PDT',
         distance: r.distance || STAGE_DISTANCES[r.leg] || '',
         difficulty: parseInt(r.difficulty) || STAGE_DIFFICULTY[r.leg] || 10,
@@ -1148,7 +1148,7 @@ function startStopwatch() {
   el.innerHTML = `
     <div class="total-label">Stop Watch</div>
     <div class="total-value" id="stopwatchDisplay">00:00:00.00</div>
-    <div id="clockUnofficialBanner" style="display:none;font-family:Gabarito,sans-serif;font-size:1rem;font-weight:900;color:#ef4444;text-align:center;letter-spacing:0.15em;text-transform:uppercase;display:none"></div>`;
+    <div id="clockUnofficialBanner" style="display:none;font-family:Gabarito,sans-serif;font-size:0.7rem;font-weight:900;text-align:center;letter-spacing:0.15em;text-transform:uppercase"></div>`;
   
   var flashToggle = true;
   
@@ -1157,11 +1157,20 @@ function startStopwatch() {
     var bannerEl = document.getElementById('clockUnofficialBanner');
     if (!displayEl) return;
     
-    // Confirmed — show final time in gold, hide banner
+    // Confirmed — show final time in gold with OFFICIAL FINISH TIME banner
     if (clockStatus === 'confirmed' && clockConfirmedTime) {
       displayEl.textContent = clockConfirmedTime;
       displayEl.style.color = '#f59e0b';
-      if (bannerEl) bannerEl.style.display = 'none';
+      if (bannerEl) {
+        bannerEl.style.display = 'block';
+        bannerEl.textContent = 'COMPLETED';
+        bannerEl.style.color = '#f59e0b';
+        bannerEl.style.opacity = '1';
+        bannerEl.style.fontSize = '0.65rem';
+      }
+      // Change label to "Total Course Time"
+      var labelEl = document.querySelector('.total-label');
+      if (labelEl) labelEl.textContent = 'Total Course Time';
       return;
     }
     
@@ -1187,6 +1196,7 @@ function startStopwatch() {
       if (bannerEl) {
         bannerEl.style.display = 'inline';
         bannerEl.textContent = '  UNOFFICIAL';
+        bannerEl.style.color = '#ef4444';
         var cycle = Date.now() % 2300;
         bannerEl.style.opacity = cycle < 2000 ? '1' : '0';
       }
@@ -1514,7 +1524,7 @@ function openRunnerOverlay(leg) {
   
   // Calculate pace (min/mile) from time and distance
   let paceDisplay = '—';
-  const useTime = r.coursetime || r.time;
+  const useTime = r.time;
   if (useTime && useTime !== '--:--' && r.distance) {
     const distNum = parseFloat(r.distance);
     if (distNum > 0) {
@@ -1549,7 +1559,7 @@ function openRunnerOverlay(leg) {
   
   const hasMessage = r.message && r.message.trim().length > 0;
   const messageText = hasMessage ? r.message.trim().substring(0, 395) : '';
-  const timeLabel = r.time && r.time !== '--:--' ? 'Official Time' : 'Run Time';
+  const timeLabel = 'Run Time';
   const timeValue = r.time || '—';
   
   if (hasMessage) {
