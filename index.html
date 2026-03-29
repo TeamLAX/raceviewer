@@ -1351,6 +1351,30 @@ function render() {
   const isMobile = window.innerWidth <= 600;
   const gridContent = isMobile ? allCards : allCards + allCards;
 
+  // ── RACE FINISHED LAYOUT — full-screen grid of all runners ──
+  if (clockStatus === 'confirmed') {
+    var finishCards = runners.map(function(r) { return createCard(r); }).join('');
+    app.innerHTML = `
+      <div class="header" style="padding:12px var(--side-margin);position:relative">
+        <div class="header-info">
+          <h1>Baker-to-Vegas<span class="pipe"> <span>|</span> </span><span class="title-team">Team LAX <span>2026</span></span></h1>
+          <div class="captain">Team Captain Roxanna Carlos<br/>Airport Police, Sergeant</div>
+          <div style="margin-top:8px;transform:rotate(-3deg);display:inline-block">
+            <div style="font-family:Gabarito,sans-serif;font-size:1.8rem;font-weight:900;color:#f59e0b;letter-spacing:0.04em;line-height:1;border:3px solid #f59e0b;padding:4px 14px;border-radius:6px;display:inline-block;text-shadow:0 2px 8px rgba(0,0,0,0.5);box-shadow:0 0 20px rgba(245,158,11,0.15)">${clockConfirmedTime || '16:34:14'} <span style="font-size:0.7rem;letter-spacing:0.2em;vertical-align:middle;opacity:0.8">OFFICIAL</span></div>
+          </div>
+          <div id="viewerCount" style="font-size:0.55rem;color:rgba(255,255,255,0.35);margin-top:6px;font-family:'Lexend Deca',sans-serif"></div>
+        </div>
+      </div>
+      <div style="padding:0 var(--side-margin);overflow-y:auto;flex:1">
+        <div style="display:grid;grid-template-columns:repeat(var(--grid-cols), 1fr);gap:var(--grid-gap);padding-bottom:20px">
+          ${finishCards}
+        </div>
+      </div>`;
+    requestAnimationFrame(() => { sendHeartbeat(); });
+    return;
+  }
+
+  // ── NORMAL RACE LAYOUT ──
   app.innerHTML = `
     <div class="header">
       <div class="header-info">
