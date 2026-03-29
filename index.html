@@ -228,6 +228,10 @@
       0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6), 0 2px 6px rgba(0,0,0,0.5); transform: scale(1); }
       50% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0), 0 2px 6px rgba(0,0,0,0.5); transform: scale(1.1); }
     }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
 
     /* ── Grid carousel area — pinned to bottom ── */
     .grid-viewport {
@@ -1327,6 +1331,22 @@ function render() {
     '</div>'
   );
 
+  // Add LIVE STREAM card — only shows when active runner is Stage 19 or 20 (or race finished)
+  var activeleg = ar ? ar.leg : 0;
+  if (activeleg >= 19 || clockStatus === 'confirmed') {
+    mixedCards.push(
+      '<div class="card" onclick="openLiveStream()" style="cursor:pointer;display:flex;flex-direction:column;padding:5px 10px 8px;overflow:hidden">' +
+        '<div style="font-family:Gabarito,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#ef4444;line-height:1;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px"><div style="width:6px;height:6px;border-radius:50%;background:#ef4444;animation:livePulse 1.5s infinite;flex-shrink:0"></div>LIVE STREAM</div>' +
+        '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin-top:4px">' +
+          '<div style="width:100%;border-radius:6px;overflow:hidden;position:relative;padding-bottom:56.25%">' +
+            '<iframe src="https://www.youtube.com/embed/XwBOXC6ZaUk?si=cV_0XZgWJvdRCCLg&autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&loop=1" title="B2V Live" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></iframe>' +
+          '</div>' +
+          '<div style="font-family:Gabarito,sans-serif;font-size:0.55rem;font-weight:700;color:rgba(255,255,255,0.5);text-align:center;line-height:1.1">Tap for Full Screen</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   const allCards = mixedCards.join('');
   const isMobile = window.innerWidth <= 600;
   const gridContent = isMobile ? allCards : allCards + allCards;
@@ -1724,6 +1744,38 @@ function openSponsorOverlay(idx) {
   
   if (overlayTimer) clearTimeout(overlayTimer);
   overlayTimer = setTimeout(closeOverlay, 22000);
+}
+
+function openLiveStream() {
+  var old = document.getElementById('runnerOverlay');
+  if (old) old.remove();
+  
+  var overlay = document.createElement('div');
+  overlay.id = 'runnerOverlay';
+  overlay.className = 'runner-overlay';
+  overlay.onclick = function(e) { if (e.target === overlay) closeLiveStream(); };
+  overlay.innerHTML = 
+    '<div style="position:relative;width:95vw;max-width:560px;background:#000;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.8)" onclick="event.stopPropagation()">' +
+      '<button onclick="event.stopPropagation(); closeLiveStream()" style="position:absolute;top:8px;right:8px;z-index:10;background:rgba(0,0,0,0.7);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>' +
+      '<div style="font-family:Gabarito,sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#ef4444;text-align:center;padding:10px 0 6px;background:#111">● LIVE — Stage 20 Finish</div>' +
+      '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden">' +
+        '<iframe src="https://www.youtube.com/embed/XwBOXC6ZaUk?si=cV_0XZgWJvdRCCLg&autoplay=1" title="B2V Live Stream" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%"></iframe>' +
+      '</div>' +
+    '</div>';
+  
+  document.body.appendChild(overlay);
+  requestAnimationFrame(function() { overlay.classList.add('visible'); });
+}
+
+function closeLiveStream() {
+  var overlay = document.getElementById('runnerOverlay');
+  if (overlay) {
+    overlay.classList.remove('visible');
+    setTimeout(function() {
+      var el = document.getElementById('runnerOverlay');
+      if (el) el.remove();
+    }, 600);
+  }
 }
 
 function openAlternatesOverlay() {
