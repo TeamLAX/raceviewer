@@ -1306,6 +1306,17 @@ function render() {
     );
   }
   
+  // Add ROUTE MAP card
+  mixedCards.push(
+    '<div class="card" onclick="window.open(\'https://teamlax.github.io/raceviewer/secretmap\',\'_blank\')" style="cursor:pointer;display:flex;flex-direction:column;padding:5px 10px 20px">' +
+      '<div style="font-family:Gabarito,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#fdba74;line-height:1;text-align:center">ROUTE MAP</div>' +
+      '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">' +
+        '<img src="https://filedn.com/lVLsOock1BfXwnRWAjG1lob/LAAPOA/B2VMap.png" alt="Route Map" style="width:60px;height:60px;object-fit:contain;opacity:0.8" />' +
+        '<div style="font-family:Gabarito,sans-serif;font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.7);text-align:center;line-height:1.2">Baker to Vegas<br/>Live Course</div>' +
+      '</div>' +
+    '</div>'
+  );
+
   const allCards = mixedCards.join('');
   const isMobile = window.innerWidth <= 600;
   const gridContent = isMobile ? allCards : allCards + allCards;
