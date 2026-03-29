@@ -1246,7 +1246,7 @@ function createCard(r) {
         <div class="stat-value" style="position:relative;overflow:hidden;z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - r.difficulty) * 5}%;background:linear-gradient(105deg, ${gaugeColor(r.difficulty)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${r.distance || '—'}</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">${r.time && r.time !== '--:--' ? 'Official Time' : 'Run Time'}</div>
+        <div class="stat-label">Run Time</div>
         <div class="stat-value">${r.time}</div>
       </div>
     </div>
