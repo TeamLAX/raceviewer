@@ -1038,7 +1038,7 @@ function fetchRunners() {
         ...r,
         photo: r.photo || FALLBACK_PHOTO,
         name: r.name || 'Runner ' + r.leg,
-        time: r.time || '--:--',
+        time: r.time || r.coursetime || '--:--',
         start: r.start || '--:-- PDT',
         distance: r.distance || STAGE_DISTANCES[r.leg] || '',
         difficulty: parseInt(r.difficulty) || STAGE_DIFFICULTY[r.leg] || 10,
@@ -1246,8 +1246,8 @@ function createCard(r) {
         <div class="stat-value" style="position:relative;overflow:hidden;z-index:1"><span style="position:absolute;top:0;left:0;bottom:0;width:${(21 - r.difficulty) * 5}%;background:linear-gradient(105deg, ${gaugeColor(r.difficulty)} 70%, transparent 100%);z-index:-1;border-radius:3px"></span>${r.distance || '—'}</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">${r.coursetime ? 'Official Time' : 'Run Time'}</div>
-        <div class="stat-value">${r.coursetime || r.time}</div>
+        <div class="stat-label">${r.time && r.time !== '--:--' ? 'Official Time' : 'Run Time'}</div>
+        <div class="stat-value">${r.time}</div>
       </div>
     </div>
   </div>`;
@@ -1503,10 +1503,11 @@ function openRunnerOverlay(leg) {
   
   // Calculate pace (min/mile) from time and distance
   let paceDisplay = '—';
-  if (r.time && r.time !== '--:--' && r.distance) {
+  const useTime = r.coursetime || r.time;
+  if (useTime && useTime !== '--:--' && r.distance) {
     const distNum = parseFloat(r.distance);
     if (distNum > 0) {
-      const timeParts = r.time.split(':');
+      const timeParts = useTime.split(':');
       let totalMins = 0;
       if (timeParts.length === 2) totalMins = parseInt(timeParts[0]) + parseInt(timeParts[1]) / 60;
       if (timeParts.length === 3) totalMins = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]) + parseInt(timeParts[2]) / 60;
@@ -1537,8 +1538,8 @@ function openRunnerOverlay(leg) {
   
   const hasMessage = r.message && r.message.trim().length > 0;
   const messageText = hasMessage ? r.message.trim().substring(0, 395) : '';
-  const timeLabel = r.coursetime ? 'Official Time' : 'Run Time';
-  const timeValue = r.coursetime || r.time || '—';
+  const timeLabel = r.time && r.time !== '--:--' ? 'Official Time' : 'Run Time';
+  const timeValue = r.time || '—';
   
   if (hasMessage) {
     // Compact layout with message
